@@ -1,11 +1,12 @@
 'use client'
-// PLACE AT: src/app/sessions/page.tsx
+// src/app/sessions/page.tsx
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import VerdictBadge from '@/components/shared/VerdictBadge'
 import { Verdict, FeatureClassification } from '@/lib/types'
+import { getSessions } from '@/lib/api'
 
 interface SessionRow {
   id: string
@@ -19,16 +20,6 @@ interface SessionRow {
   created_at: string
 }
 
-const MOCK_SESSIONS: SessionRow[] = [
-  { id: 's1', feature_request: 'Add OTP login to a fintech app', feature_classification: 'enhancement', verdict: 'SHIPPABLE', project: 'Fintech App', conflicts_resolved: 3, agents_count: 7, run_duration: '2m 18s', created_at: '2h ago' },
-  { id: 's2', feature_request: 'Build real-time chat with WebSockets', feature_classification: 'new_feature', verdict: 'SHIPPABLE', project: 'Fintech App', conflicts_resolved: 2, agents_count: 7, run_duration: '3m 04s', created_at: '5h ago' },
-  { id: 's3', feature_request: 'Add Stripe payment integration', feature_classification: 'new_feature', verdict: 'NEEDS_REVISION', project: 'E-commerce Platform', conflicts_resolved: 4, agents_count: 7, run_duration: '4m 41s', created_at: '1d ago' },
-  { id: 's4', feature_request: 'Implement rate limiting middleware', feature_classification: 'enhancement', verdict: 'SHIPPABLE', project: 'Internal Dev Tool', conflicts_resolved: 1, agents_count: 7, run_duration: '1m 52s', created_at: '1d ago' },
-  { id: 's5', feature_request: 'Add file upload with S3 and presigned URLs', feature_classification: 'new_feature', verdict: 'SHIPPABLE', project: 'E-commerce Platform', conflicts_resolved: 2, agents_count: 7, run_duration: '2m 37s', created_at: '2d ago' },
-  { id: 's6', feature_request: 'Refactor auth module to use middleware pattern', feature_classification: 'refactor', verdict: 'SHIPPABLE', project: 'Fintech App', conflicts_resolved: 1, agents_count: 7, run_duration: '2m 01s', created_at: '3d ago' },
-  { id: 's7', feature_request: 'Fix race condition in transaction processing', feature_classification: 'bug_fix', verdict: 'NEEDS_REVISION', project: 'Fintech App', conflicts_resolved: 2, agents_count: 7, run_duration: '3m 22s', created_at: '4d ago' },
-]
-
 const CLASSIFICATION_LABELS: Record<FeatureClassification, string> = {
   new_feature: 'New feature',
   enhancement: 'Enhancement',
@@ -39,20 +30,67 @@ const CLASSIFICATION_LABELS: Record<FeatureClassification, string> = {
 const VERDICT_FILTERS = ['All', 'SHIPPABLE', 'NEEDS_REVISION']
 const CLASS_FILTERS: Array<'all' | FeatureClassification> = ['all', 'new_feature', 'enhancement', 'refactor', 'bug_fix']
 
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}m ${String(s).padStart(2, '0')}s`
+}
+
+function formatTimeAgo(dateStr: string): string {
+  try {
+    const date = new Date(dateStr)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    if (diffMins < 1) return 'now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    const diffHours = Math.floor(diffMins / 60)
+    if (diffHours < 24) return `${diffHours}h ago`
+    const diffDays = Math.floor(diffHours / 24)
+    return `${diffDays}d ago`
+  } catch {
+    return dateStr
+  }
+}
+
 export default function SessionsPage() {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [verdictFilter, setVerdictFilter] = useState('All')
   const [classFilter, setClassFilter] = useState<'all' | FeatureClassification>('all')
+  const [sessions, setSessions] = useState<SessionRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [totalCount, setTotalCount] = useState(0)
+
+  useEffect(() => {
+    getSessions().then((result) => {
+      if (result.ok) {
+        const rows: SessionRow[] = result.data.sessions.map((s) => ({
+          id: s.id,
+          feature_request: s.feature_request,
+          feature_classification: s.feature_classification,
+          verdict: s.verdict,
+          project: '', // Sessions endpoint doesn't return project name
+          conflicts_resolved: s.conflicts_resolved,
+          agents_count: s.agents_count,
+          run_duration: formatDuration(s.run_duration_seconds),
+          created_at: formatTimeAgo(s.created_at),
+        }))
+        setSessions(rows)
+        setTotalCount(rows.length)
+      }
+      setLoading(false)
+    })
+  }, [])
 
   const filtered = useMemo(() => {
-    return MOCK_SESSIONS.filter((s) => {
+    return sessions.filter((s) => {
       const matchSearch = search === '' || s.feature_request.toLowerCase().includes(search.toLowerCase()) || s.project.toLowerCase().includes(search.toLowerCase())
       const matchVerdict = verdictFilter === 'All' || s.verdict === verdictFilter
       const matchClass = classFilter === 'all' || s.feature_classification === classFilter
       return matchSearch && matchVerdict && matchClass
     })
-  }, [search, verdictFilter, classFilter])
+  }, [sessions, search, verdictFilter, classFilter])
 
   return (
     <div className="relative min-h-screen bg-black">
@@ -120,7 +158,11 @@ export default function SessionsPage() {
             <div className="text-right">Time</div>
           </div>
 
-          {filtered.length === 0 && (
+          {loading && (
+            <div className="text-center py-16 text-[13px] text-white/25">Loading sessions…</div>
+          )}
+
+          {!loading && filtered.length === 0 && (
             <div className="text-center py-16 text-[13px] text-white/25">No sessions match your filters.</div>
           )}
 
@@ -134,7 +176,7 @@ export default function SessionsPage() {
               className="w-full grid grid-cols-[2.5fr_1fr_1fr_1fr_90px_80px] px-5 py-3.5 border-b border-white/[0.04] last:border-0 items-center text-left hover:bg-white/[0.025] transition-colors duration-150 group"
             >
               <div className="text-[13px] text-white font-medium truncate pr-4">&quot;{s.feature_request}&quot;</div>
-              <div className="text-[12px] text-white/45 truncate">{s.project}</div>
+              <div className="text-[12px] text-white/45 truncate">{s.project || '—'}</div>
               <div className="text-[12px] text-white/45">{CLASSIFICATION_LABELS[s.feature_classification]}</div>
               <div><VerdictBadge verdict={s.verdict} size="sm" /></div>
               <div className="text-[12px] text-white/35">{s.agents_count} / 7</div>
@@ -147,7 +189,7 @@ export default function SessionsPage() {
         </div>
 
         <div className="mt-4 text-[12px] text-white/25 text-right">
-          {filtered.length} of {MOCK_SESSIONS.length} sessions shown
+          {filtered.length} of {totalCount} sessions shown
         </div>
       </div>
     </div>

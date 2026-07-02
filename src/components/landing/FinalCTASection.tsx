@@ -81,8 +81,8 @@ export default function FinalCTASection({ onWaitlist }: FinalCTASectionProps) {
           transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
           className="font-display text-center font-extrabold leading-[0.8] select-none"
           style={{
-            fontSize: 'clamp(80px, 17vw, 240px)',
-            letterSpacing: '-0.04em',
+            fontSize: 'clamp(56px, 11vw, 150px)',
+            letterSpacing: '-0.03em',
             background:
               'linear-gradient(90deg, #c97c1a 0%, #f0c040 20%, #ffffff 45%, #93c5fd 68%, #6366f1 88%, #8b5cf6 100%)',
             WebkitBackgroundClip: 'text',

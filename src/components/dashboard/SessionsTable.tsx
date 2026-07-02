@@ -5,69 +5,6 @@ import { motion } from 'framer-motion'
 import VerdictBadge from '@/components/shared/VerdictBadge'
 import { Session } from '@/lib/types'
 
-const MOCK_SESSIONS: Session[] = [
-  {
-    id: '1',
-    feature_request: 'Add OTP login to a fintech app',
-    feature_classification: 'enhancement',
-    verdict: 'SHIPPABLE',
-    step_completed: 9,
-    created_at: '2h ago',
-    context_provided: true,
-    agents_count: 7,
-    conflicts_resolved: 3,
-    run_duration_seconds: 138,
-  },
-  {
-    id: '2',
-    feature_request: 'Build a real-time chat with WebSockets',
-    feature_classification: 'new_feature',
-    verdict: 'SHIPPABLE',
-    step_completed: 9,
-    created_at: '5h ago',
-    context_provided: true,
-    agents_count: 7,
-    conflicts_resolved: 2,
-    run_duration_seconds: 184,
-  },
-  {
-    id: '3',
-    feature_request: 'Add Stripe payment integration',
-    feature_classification: 'new_feature',
-    verdict: 'NEEDS_REVISION',
-    step_completed: 9,
-    created_at: '1d ago',
-    context_provided: true,
-    agents_count: 7,
-    conflicts_resolved: 4,
-    run_duration_seconds: 281,
-  },
-  {
-    id: '4',
-    feature_request: 'Implement rate limiting middleware',
-    feature_classification: 'enhancement',
-    verdict: 'SHIPPABLE',
-    step_completed: 9,
-    created_at: '1d ago',
-    context_provided: true,
-    agents_count: 7,
-    conflicts_resolved: 1,
-    run_duration_seconds: 112,
-  },
-  {
-    id: '5',
-    feature_request: 'Add 2FA backup codes to OTP login',
-    feature_classification: 'enhancement',
-    verdict: 'RUNNING',
-    step_completed: 5,
-    created_at: 'now',
-    context_provided: true,
-    agents_count: 4,
-    conflicts_resolved: 1,
-    run_duration_seconds: 72,
-  },
-]
-
 const CLASSIFICATION_LABELS: Record<string, string> = {
   new_feature: 'New feature',
   enhancement: 'Enhancement',
@@ -82,10 +19,14 @@ function formatDuration(seconds: number) {
 }
 
 interface SessionsTableProps {
+  sessions?: Session[]
+  loading?: boolean
   onOpenRun: (session: Session) => void
 }
 
-export default function SessionsTable({ onOpenRun }: SessionsTableProps) {
+export default function SessionsTable({ sessions, loading, onOpenRun }: SessionsTableProps) {
+  const rows = sessions || []
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3.5">
@@ -118,7 +59,15 @@ export default function SessionsTable({ onOpenRun }: SessionsTableProps) {
           <div className="text-right">Duration</div>
         </div>
 
-        {MOCK_SESSIONS.map((session, i) => (
+        {loading && (
+          <div className="text-center py-12 text-[13px] text-white/25">Loading sessions…</div>
+        )}
+
+        {!loading && rows.length === 0 && (
+          <div className="text-center py-12 text-[13px] text-white/25">No sessions yet. Start your first run.</div>
+        )}
+
+        {rows.map((session, i) => (
           <motion.button
             key={session.id}
             initial={{ opacity: 0 }}

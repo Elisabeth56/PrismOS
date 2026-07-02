@@ -1,8 +1,9 @@
 'use client'
 // src/components/dashboard/ProjectMemoryCard.tsx
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { getProjectMemory } from '@/lib/api'
 
 const ENTRY_TYPE_STYLES: Record<string, { label: string; color: string }> = {
   architecture_decision: { label: 'arch decision', color: '#f59e0b' },
@@ -10,18 +11,48 @@ const ENTRY_TYPE_STYLES: Record<string, { label: string; color: string }> = {
   conflict_resolution: { label: 'conflict', color: '#f43f5e' },
   ux_decision: { label: 'ux decision', color: '#f43f5e' },
   known_constraint: { label: 'constraint', color: '#8b5cf6' },
+  release_record: { label: 'release', color: '#3b82f6' },
 }
 
-const MOCK_ENTRIES = [
-  { type: 'architecture_decision', title: 'Session tokens chosen over JWT', date: '3d ago' },
-  { type: 'shipped_feature', title: 'Email OTP login shipped', date: '3d ago' },
-  { type: 'known_constraint', title: 'Redis already used for session cache', date: '5d ago' },
-  { type: 'conflict_resolution', title: 'SMS vs email OTP — email won', date: '5d ago' },
-  { type: 'ux_decision', title: 'Single OTP field over 6 separate boxes', date: '5d ago' },
-]
+interface MemoryEntryDisplay {
+  type: string
+  title: string
+  date: string
+}
 
-export default function ProjectMemoryCard() {
+interface ProjectMemoryCardProps {
+  projectId?: string
+  projectName?: string
+  entries?: MemoryEntryDisplay[]
+}
+
+export default function ProjectMemoryCard({ projectId, projectName, entries: propEntries }: ProjectMemoryCardProps) {
   const [expanded, setExpanded] = useState(false)
+  const [entries, setEntries] = useState<MemoryEntryDisplay[]>(propEntries || [])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (propEntries) {
+      setEntries(propEntries)
+      return
+    }
+
+    if (!projectId) return
+
+    setLoading(true)
+    getProjectMemory(projectId).then((result) => {
+      if (result.ok) {
+        setEntries(
+          result.data.entries.map((e) => ({
+            type: e.entry_type,
+            title: e.title,
+            date: e.created_at,
+          }))
+        )
+      }
+      setLoading(false)
+    })
+  }, [projectId, propEntries])
 
   return (
     <motion.div
@@ -43,10 +74,10 @@ export default function ProjectMemoryCard() {
         </div>
         <div className="flex-1">
           <div className="text-[13px] font-semibold text-white">
-            Project memory loaded — {MOCK_ENTRIES.length} entries
+            {loading ? 'Loading project memory…' : `Project memory loaded — ${entries.length} entries`}
           </div>
           <div className="text-[11px] text-white/40">
-            Fintech App · architecture decisions, shipped features, and known constraints carried forward
+            {projectName || 'Project'} · architecture decisions, shipped features, and known constraints carried forward
           </div>
         </div>
         <span className={`text-white/30 text-[12px] transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}>
@@ -64,8 +95,11 @@ export default function ProjectMemoryCard() {
             className="overflow-hidden"
           >
             <div className="px-5 pb-4 flex flex-col gap-1.5 border-t border-white/[0.06] pt-3">
-              {MOCK_ENTRIES.map((entry, i) => {
-                const style = ENTRY_TYPE_STYLES[entry.type]
+              {entries.length === 0 && !loading && (
+                <div className="text-[12px] text-white/25 text-center py-3">No memory entries yet.</div>
+              )}
+              {entries.map((entry, i) => {
+                const style = ENTRY_TYPE_STYLES[entry.type] || { label: entry.type, color: '#6b7280' }
                 return (
                   <div
                     key={i}

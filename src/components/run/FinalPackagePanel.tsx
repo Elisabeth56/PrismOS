@@ -1,7 +1,8 @@
 'use client'
-// src/components/run/FinalPackagePanel.tsx
+// REPLACES: src/components/run/FinalPackagePanel.tsx
 
 import { useState } from 'react'
+import JSZip from 'jszip'
 import VerdictBadge from '@/components/shared/VerdictBadge'
 import { Verdict } from '@/lib/types'
 
@@ -10,6 +11,9 @@ type Tab = 'code' | 'tests' | 'benchmark'
 interface FinalPackagePanelProps {
   verdict: Verdict
   ready: boolean
+  engineerOutput?: string | null
+  qaOutput?: string | null
+  packageData?: Record<string, unknown> | null
 }
 
 const MOCK_CODE_FILES = [
@@ -61,8 +65,31 @@ const MOCK_BENCHMARK = [
   { metric: 'Ship verdict', baseline: 'None', prismos: 'SHIPPABLE' },
 ]
 
-export default function FinalPackagePanel({ verdict, ready }: FinalPackagePanelProps) {
+export default function FinalPackagePanel({ verdict, ready, engineerOutput, qaOutput, packageData }: FinalPackagePanelProps) {
   const [tab, setTab] = useState<Tab>('code')
+  const [zipping, setZipping] = useState(false)
+
+  // Bundles MOCK_CODE_FILES client-side and triggers a save — no server round-trip.
+  // When real SSE data replaces the mock array, this function needs zero changes;
+  // it only ever reads from the files list already in component state.
+  const handleDownloadCode = async () => {
+    setZipping(true)
+    try {
+      const zip = new JSZip()
+      MOCK_CODE_FILES.forEach((file) => zip.file(file.path, file.content))
+      const blob = await zip.generateAsync({ type: 'blob' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'prismos-generated-code.zip'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } finally {
+      setZipping(false)
+    }
+  }
 
   return (
     <div
@@ -81,18 +108,37 @@ export default function FinalPackagePanel({ verdict, ready }: FinalPackagePanelP
         )}
       </div>
 
-      <div className="flex border-b border-white/[0.06]">
-        {(['code', 'tests', 'benchmark'] as Tab[]).map((t) => (
+      <div className="flex items-center justify-between border-b border-white/[0.06]">
+        <div className="flex">
+          {(['code', 'tests', 'benchmark'] as Tab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-2.5 text-[12px] font-semibold capitalize border-b-2 transition-colors duration-200 ${
+                tab === t ? 'text-white border-blue-500' : 'text-white/30 border-transparent hover:text-white/50'
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'code' && ready && (
           <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-2.5 text-[12px] font-semibold capitalize border-b-2 transition-colors duration-200 ${
-              tab === t ? 'text-white border-blue-500' : 'text-white/30 border-transparent hover:text-white/50'
-            }`}
+            onClick={handleDownloadCode}
+            disabled={zipping}
+            className="flex items-center gap-1.5 text-[11px] font-semibold text-white/60 hover:text-white bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] rounded-full px-3 py-1.5 mr-3 transition-all duration-200 disabled:opacity-50 disabled:cursor-wait"
           >
-            {t}
+            {zipping ? (
+              <>
+                <span className="w-2.5 h-2.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                Zipping…
+              </>
+            ) : (
+              <>⬇ Download code</>
+            )}
           </button>
-        ))}
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">

@@ -1,5 +1,5 @@
 'use client'
-// src/app/page.tsx
+// REPLACES: src/app/page.tsx
 
 import { useState } from 'react'
 import Navbar from '@/components/landing/Navbar'
@@ -14,14 +14,19 @@ import PricingSection from '@/components/landing/PricingSection'
 import FinalCTASection from '@/components/landing/FinalCTASection'
 import Footer from '@/components/landing/Footer'
 import WaitlistModal from '@/components/shared/WaitlistModal'
+import DemoVideoModal from '@/components/shared/DemoVideoModal'
 
 export default function LandingPage() {
   const [waitlistOpen, setWaitlistOpen] = useState(false)
+  const [demoVideoOpen, setDemoVideoOpen] = useState(false)
 
   return (
     <main className="relative bg-black min-h-screen">
       <Navbar onWaitlist={() => setWaitlistOpen(true)} />
-      <HeroSection onWaitlist={() => setWaitlistOpen(true)} />
+      <HeroSection
+        onWaitlist={() => setWaitlistOpen(true)}
+        onWatchDemo={() => setDemoVideoOpen(true)}
+      />
       <ProductShowcase />
       <LogoStrip />
       <FeaturesSection />
@@ -30,8 +35,9 @@ export default function LandingPage() {
       <BenchmarkSection />
       <PricingSection onWaitlist={() => setWaitlistOpen(true)} />
       <FinalCTASection onWaitlist={() => setWaitlistOpen(true)} />
-      <Footer />
+      <Footer onWatchDemo={() => setDemoVideoOpen(true)} />
       <WaitlistModal open={waitlistOpen} onClose={() => setWaitlistOpen(false)} />
+      <DemoVideoModal open={demoVideoOpen} onClose={() => setDemoVideoOpen(false)} />
     </main>
   )
 }

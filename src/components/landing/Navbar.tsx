@@ -1,5 +1,5 @@
 'use client'
-// src/components/landing/Navbar.tsx
+// REPLACES: src/components/landing/Navbar.tsx
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -46,6 +46,18 @@ export default function Navbar({ onWaitlist }: NavbarProps) {
             {link.label}
           </a>
         ))}
+        <a
+          href="/demo"
+          className="text-[13px] font-medium text-white/60 hover:text-white px-4 py-1.5 rounded-full transition-all duration-200 hover:bg-white/[0.07]"
+        >
+          Demo
+        </a>
+        <a
+          href="/dashboard"
+          className="text-[13px] font-medium text-white/60 hover:text-white px-4 py-1.5 rounded-full transition-all duration-200 hover:bg-white/[0.07]"
+        >
+          Dashboard
+        </a>
       </div>
 
       {/* CTA */}
@@ -83,12 +95,26 @@ export default function Navbar({ onWaitlist }: NavbarProps) {
               <a
                 key={link.href}
                 href={link.href}
-                className="text-[15px] text-white/70 hover:text-white py-3 border-b border-white/[0.06] last:border-0 transition-colors"
+                className="text-[15px] text-white/70 hover:text-white py-3 border-b border-white/[0.06] transition-colors"
                 onClick={() => setMenuOpen(false)}
               >
                 {link.label}
               </a>
             ))}
+            <a
+              href="/demo"
+              className="text-[15px] text-white/70 hover:text-white py-3 border-b border-white/[0.06] transition-colors"
+              onClick={() => setMenuOpen(false)}
+            >
+              Demo
+            </a>
+            <a
+              href="/dashboard"
+              className="text-[15px] text-white/70 hover:text-white py-3 border-b border-white/[0.06] last:border-0 transition-colors"
+              onClick={() => setMenuOpen(false)}
+            >
+              Dashboard
+            </a>
             <button
               onClick={() => { setMenuOpen(false); onWaitlist() }}
               className="mt-3 text-[14px] font-semibold bg-white text-black px-5 py-2.5 rounded-full"

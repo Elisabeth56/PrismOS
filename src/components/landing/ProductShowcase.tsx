@@ -59,69 +59,128 @@ export default function ProductShowcase() {
                 <div className="w-20" />
               </div>
 
-              {/* Image/video placeholder */}
+              {/* Mini dashboard mockup — built from the same tokens as the real dashboard,
+                  so this reads as an actual screenshot rather than a generic placeholder.
+                  Swap for <Image>/<video> once a real capture exists, same aspect-ratio wrapper. */}
               <div className="relative aspect-[16/9] w-full">
-                {/* Replace this div with <Image> or <video> when ready */}
                 <div
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-4"
-                  style={{
-                    background:
-                      'linear-gradient(135deg, #0a0a14 0%, #0d0d1a 50%, #080810 100%)',
-                  }}
+                  className="absolute inset-0 flex"
+                  style={{ background: 'linear-gradient(135deg, #0a0a10 0%, #0d0d15 50%, #08080d 100%)' }}
                 >
-                  {/* Placeholder agent panel preview */}
-                  <div className="w-full h-full p-5 grid grid-cols-7 gap-2 opacity-60">
-                    {[
-                      { label: 'Context', color: '#10b981' },
-                      { label: 'PM', color: '#f97316' },
-                      { label: 'Architect', color: '#f59e0b' },
-                      { label: 'UX', color: '#f43f5e' },
-                      { label: 'Engineer', color: '#3b82f6' },
-                      { label: 'QA', color: '#14b8a6' },
-                      { label: 'Release', color: '#8b5cf6' },
-                    ].map((agent, i) => (
-                      <div
-                        key={agent.label}
-                        className="rounded-xl border border-white/[0.06] p-3 flex flex-col gap-2"
-                        style={{
-                          background: 'rgba(255,255,255,0.025)',
-                          borderTopColor: agent.color,
-                          borderTopWidth: 2,
-                        }}
-                      >
-                        <div className="text-[9px] font-bold" style={{ color: agent.color }}>
-                          {agent.label}
+                  {/* Mini sidebar */}
+                  <div className="w-[15%] min-w-[86px] border-r border-white/[0.06] flex flex-col py-3 px-2 gap-3">
+                    <div className="flex items-center gap-1.5 px-1">
+                      <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'linear-gradient(135deg,#f59e0b,#3b82f6)' }} />
+                      <div className="h-1 w-8 rounded-full bg-white/20" />
+                    </div>
+                    <div className="rounded-md bg-white/[0.05] border border-white/[0.08] px-1.5 py-1.5 flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f59e0b,#3b82f6)' }} />
+                      <div className="h-1 w-6 rounded-full bg-white/25" />
+                    </div>
+                    <div className="flex flex-col gap-1.5 mt-1">
+                      {[
+                        { active: true, w: 60 },
+                        { active: false, w: 45 },
+                        { active: false, w: 50 },
+                        { active: false, w: 40 },
+                        { active: false, w: 55 },
+                      ].map((item, i) => (
+                        <div
+                          key={i}
+                          className={`flex items-center gap-1.5 px-1.5 py-1.5 rounded-md ${item.active ? 'bg-white/[0.06]' : ''}`}
+                        >
+                          <div className={`w-1.5 h-1.5 rounded-sm ${item.active ? 'bg-white/50' : 'bg-white/15'}`} />
+                          <div className={`h-1 rounded-full ${item.active ? 'bg-white/35' : 'bg-white/10'}`} style={{ width: `${item.w}%` }} />
                         </div>
-                        {[80, 60, 90, 50, 70].map((w, j) => (
-                          <div
-                            key={j}
-                            className="h-1 rounded-full"
-                            style={{
-                              width: `${w}%`,
-                              background: agent.color,
-                              opacity: 0.3,
-                              animation: `shimmer-line ${1.5 + i * 0.2 + j * 0.1}s ease-in-out infinite`,
-                            }}
-                          />
-                        ))}
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                    <div className="flex-1" />
+                    <div className="rounded-md h-5" style={{ background: 'rgba(255,255,255,0.9)' }} />
                   </div>
 
-                  {/* Placeholder text */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-white/20 text-[13px] font-medium mb-1">
-                        Product screenshot / screen recording
+                  {/* Main content */}
+                  <div className="flex-1 flex flex-col min-w-0">
+                    {/* Mini topbar */}
+                    <div className="h-8 border-b border-white/[0.06] flex items-center px-4 gap-3 flex-shrink-0">
+                      <div className="h-1 w-10 rounded-full bg-white/15" />
+                      <div className="flex-1 max-w-[140px] h-3.5 rounded-full bg-white/[0.05] border border-white/[0.08]" />
+                      <div className="ml-auto flex items-center gap-1.5">
+                        <div className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2 py-0.5">
+                          <span className="w-1 h-1 rounded-full bg-emerald-400" />
+                          <div className="h-1 w-8 rounded-full bg-emerald-400/40" />
+                        </div>
+                        <div className="w-4 h-4 rounded-full" style={{ background: 'linear-gradient(135deg,#f59e0b,#f97316)' }} />
                       </div>
-                      <div className="text-white/10 text-[11px]">
-                        Replace placeholder div with {'<Image>'} or {'<video>'}
+                    </div>
+
+                    {/* Body */}
+                    <div className="flex-1 p-4 flex flex-col gap-3 min-h-0">
+                      {/* Stat cards row */}
+                      <div className="grid grid-cols-4 gap-2 flex-shrink-0">
+                        {[
+                          { v: '24', c: '#3b82f6' },
+                          { v: '19', c: '#22c55e' },
+                          { v: '47', c: '#f59e0b' },
+                          { v: '2.4m', c: '#8b5cf6' },
+                        ].map((stat, i) => (
+                          <div key={i} className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-2.5 py-2">
+                            <div className="w-3.5 h-3.5 rounded-md mb-1.5" style={{ background: `${stat.c}25` }} />
+                            <div className="text-[10px] font-bold text-white/70">{stat.v}</div>
+                            <div className="h-1 w-8 rounded-full bg-white/10 mt-1" />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Agent run row — the money shot */}
+                      <div className="flex-1 rounded-lg bg-white/[0.03] border border-white/[0.06] p-3 flex flex-col gap-2 min-h-0">
+                        <div className="flex items-center justify-between flex-shrink-0">
+                          <div className="h-1.5 w-24 rounded-full bg-white/20" />
+                          <div className="flex items-center gap-1 bg-blue-500/10 border border-blue-500/20 rounded-full px-2 py-0.5">
+                            <span className="w-1 h-1 rounded-full bg-blue-400" style={{ animation: 'pulse-glow 1.5s ease-in-out infinite' }} />
+                            <div className="h-1 w-6 rounded-full bg-blue-400/50" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-7 gap-1.5 flex-1 min-h-0">
+                          {[
+                            { c: '#10b981', done: true },
+                            { c: '#f97316', done: true },
+                            { c: '#f59e0b', done: true },
+                            { c: '#f43f5e', done: true },
+                            { c: '#3b82f6', done: false },
+                            { c: '#14b8a6', done: false },
+                            { c: '#8b5cf6', done: false },
+                          ].map((agent, i) => (
+                            <div
+                              key={i}
+                              className="rounded-md p-1.5 flex flex-col gap-1"
+                              style={{
+                                background: 'rgba(255,255,255,0.03)',
+                                borderTop: `1.5px solid ${agent.c}`,
+                                opacity: agent.done ? 1 : 0.4,
+                              }}
+                            >
+                              <div className="w-1 h-1 rounded-full" style={{ background: agent.c }} />
+                              {[70, 90, 50].map((w, j) => (
+                                <div
+                                  key={j}
+                                  className="h-[3px] rounded-full"
+                                  style={{
+                                    width: `${w}%`,
+                                    background: agent.c,
+                                    opacity: agent.done ? 0.45 : 0.2,
+                                    animation: agent.done ? undefined : `shimmer-line ${1.4 + i * 0.15 + j * 0.1}s ease-in-out infinite`,
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Overlay gradients to blend image into frame */}
+                {/* Overlay gradients to blend the mockup into the frame */}
                 <div
                   className="absolute inset-0 pointer-events-none z-10"
                   style={{

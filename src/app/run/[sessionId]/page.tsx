@@ -1,14 +1,16 @@
 'use client'
 // src/app/run/[sessionId]/page.tsx
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import RunHeader from '@/components/run/RunHeader'
 import AgentPanelGrid, { AgentRunState } from '@/components/run/AgentPanelGrid'
 import ConflictLogPanel, { ConflictRecord } from '@/components/run/ConflictLogPanel'
 import FinalPackagePanel from '@/components/run/FinalPackagePanel'
-import { AgentType, Verdict } from '@/lib/types'
+import { AgentType, Verdict, SSEEvent } from '@/lib/types'
 import { AGENT_ORDER } from '@/lib/constants'
+import { API_BASE, getSession } from '@/lib/api'
+import { getSessionToken } from '@/lib/useSessionToken'
 
 const STEP_LABELS = [
   'Step 0 — Loading project memory',
@@ -21,120 +23,6 @@ const STEP_LABELS = [
   'Step 7 — Engineer building',
   'Step 8 — QA validating',
   'Step 9 of 9 — Complete',
-]
-
-const MOCK_OUTPUTS: Record<AgentType, string> = {
-  context_analyst: `## Existing Product Analysis
-
-Product Type: Fintech SaaS
-Frontend: Next.js 14 + TS
-Backend: FastAPI + Redis
-Routes: /auth/login,
-/transactions, /kyc/submit
-
-Constraint: Redis already
-used for session cache —
-OTP key namespace must
-not collide.`,
-  pm: `## PRD
-
-Feature: OTP Login
-CLASSIFICATION: enhancement
-
-### User stories
-Given a user on login
-When they enter email
-Then system sends 6-digit
-OTP, 10min expiry
-
-### MVP
-- Email OTP only
-- 3 attempt limit`,
-  architect: `## Design
-
-Stack: FastAPI + Redis
-(reuse existing instance)
-
-### Endpoints
-POST /auth/otp/send
-POST /auth/otp/verify
-
-DISAGREES: JWT over
-session tokens for
-stateless scaling.`,
-  uiux_designer: `## UI/UX Design
-
-### Screen Hierarchy
-[New] OTP verification
-screen
-
-### Components
-Reuse: <AuthCard>
-New: <OTPInput> — single
-6-digit field
-
-### UX Decisions
-Single field over 6 boxes:
-paste support, mobile-
-friendly`,
-  engineer: `## Implementation
-
-PUSHBACK: Session tokens
-simpler for MVP. No
-stateless requirement yet.
-
-\`\`\`python
-@router.post("/otp/send")
-async def send_otp(
-  email: str
-):
-  code = generate_otp()
-  await redis.setex(
-    f"otp:{email}",
-    600, code
-  )
-\`\`\``,
-  qa: `## QA Report
-
-Test: OTP expiry ✓
-Test: Rate limit ✓
-Test: Invalid code ✓
-Test: Replay attack ✓
-Frontend: responsive ✓
-Frontend: a11y ✓
-
-## VERDICT
-SHIPPABLE ✓`,
-  release_manager: `## Conflict Log
-
-2 conflicts resolved
-
-Decision 1: Sessions
-over JWT for MVP —
-no stateless need yet
-
-Decision 2: Enforce
-explicit TTL check at
-verify endpoint
-
-All conflicts logged.`,
-}
-
-const MOCK_CONFLICTS: ConflictRecord[] = [
-  {
-    id: 'c1',
-    agentsInvolved: ['Architect', 'Engineer'],
-    summary: 'JWT (Architect) vs session tokens (Engineer) for OTP verification flow.',
-    resolution: 'Session tokens chosen for MVP. No stateless requirement exists yet; JWT adds complexity with no user research to justify it.',
-    rationale: 'Primary tradeoff: simplicity over scalability at MVP stage.',
-  },
-  {
-    id: 'c2',
-    agentsInvolved: ['QA', 'Engineer'],
-    summary: 'SECURITY FLAG: OTP expiry window not enforced at verification endpoint.',
-    resolution: 'Engineer adds explicit TTL check + attempt counter reset on expiry.',
-    rationale: 'Primary tradeoff: correctness over speed. Security flags are non-negotiable.',
-  },
 ]
 
 function initialAgentStates(): Record<AgentType, AgentRunState> {
@@ -154,55 +42,267 @@ export default function RunViewPage() {
   const [conflicts, setConflicts] = useState<ConflictRecord[]>([])
   const [verdict, setVerdict] = useState<Verdict | null>(null)
   const [packageReady, setPackageReady] = useState(false)
-  const timers = useRef<NodeJS.Timeout[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [finalPackageData, setFinalPackageData] = useState<Record<string, unknown> | null>(null)
+  const esRef = useRef<EventSource | null>(null)
+
+  // Determine agent step index (1-based, matching STEP_LABELS)
+  const agentToStep = useCallback((agent: AgentType): number => {
+    const idx = AGENT_ORDER.indexOf(agent)
+    return idx >= 0 ? idx + 1 : 0
+  }, [])
+
+  // Handle each SSE event
+  const handleSSEEvent = useCallback((event: SSEEvent) => {
+    switch (event.type) {
+      case 'run_start':
+        setStepIndex(event.step ?? 0)
+        break
+
+      case 'memory_load_start':
+        setStepIndex(0)
+        break
+
+      case 'memory_load_done':
+        // Memory loaded, move past step 0
+        break
+
+      case 'agent_start':
+        setStepIndex(agentToStep(event.agent))
+        setActiveAgent(event.agent)
+        setAgentStates((prev) => ({
+          ...prev,
+          [event.agent]: { status: 'running', output: '' },
+        }))
+        break
+
+      case 'agent_token':
+        setStepIndex((prev) => Math.max(prev, agentToStep(event.agent)))
+        setActiveAgent(event.agent)
+        setAgentStates((prev) => ({
+          ...prev,
+          [event.agent]: {
+            status: 'running',
+            output: prev[event.agent].output + event.token,
+          },
+        }))
+        break
+
+      case 'agent_done':
+        setAgentStates((prev) => ({
+          ...prev,
+          [event.agent]: { status: 'done', output: event.output },
+        }))
+        break
+
+      // Legacy per-agent events (context_analyst, uiux_designer)
+      case 'context_analyst_start':
+        setStepIndex(agentToStep('context_analyst'))
+        setActiveAgent('context_analyst')
+        setAgentStates((prev) => ({
+          ...prev,
+          context_analyst: { status: 'running', output: '' },
+        }))
+        break
+
+      case 'context_analyst_token':
+        setStepIndex((prev) => Math.max(prev, agentToStep('context_analyst')))
+        setActiveAgent('context_analyst')
+        setAgentStates((prev) => ({
+          ...prev,
+          context_analyst: {
+            status: 'running',
+            output: prev.context_analyst.output + event.token,
+          },
+        }))
+        break
+
+      case 'context_analyst_done':
+        setAgentStates((prev) => ({
+          ...prev,
+          context_analyst: {
+            status: 'done',
+            output: prev.context_analyst.output,
+          },
+        }))
+        break
+
+      case 'uiux_designer_start':
+        setStepIndex(agentToStep('uiux_designer'))
+        setActiveAgent('uiux_designer')
+        setAgentStates((prev) => ({
+          ...prev,
+          uiux_designer: { status: 'running', output: '' },
+        }))
+        break
+
+      case 'uiux_designer_token':
+        setStepIndex((prev) => Math.max(prev, agentToStep('uiux_designer')))
+        setActiveAgent('uiux_designer')
+        setAgentStates((prev) => ({
+          ...prev,
+          uiux_designer: {
+            status: 'running',
+            output: prev.uiux_designer.output + event.token,
+          },
+        }))
+        break
+
+      case 'uiux_designer_done':
+        setAgentStates((prev) => ({
+          ...prev,
+          uiux_designer: { status: 'done', output: event.output },
+        }))
+        break
+
+      case 'conflict_start':
+        // A new conflict is being streamed — prepare placeholder
+        break
+
+      case 'conflict_token':
+        // Conflict content streaming (optional progressive display)
+        break
+
+      case 'conflict_done':
+        setConflicts((prev) => {
+          if (prev.some((c) => c.id === event.conflictId)) return prev
+          return [
+            ...prev,
+            {
+              id: event.conflictId,
+              agentsInvolved: [], // Will be filled from resolution context
+              summary: '',
+              resolution: event.resolution,
+              rationale: event.rationale,
+            },
+          ]
+        })
+        break
+
+      case 'run_complete':
+        setActiveAgent(null)
+        setStepIndex(9)
+        setVerdict(event.verdict)
+        setPackageReady(true)
+        setFinalPackageData(event.package)
+        break
+
+      case 'run_error':
+        setError(event.message)
+        setActiveAgent(null)
+        break
+    }
+  }, [agentToStep])
 
   useEffect(() => {
-    // Simulated run sequence — replace with real SSE subscription:
-    // const es = new EventSource(`${API_BASE}/runs/${sessionId}/stream`)
-    // es.onmessage = (e) => handleSSEEvent(JSON.parse(e.data))
+    // Extract session ID from URL path
+    const pathParts = location.pathname.split('/')
+    const sessionId = pathParts[pathParts.indexOf('run') + 1]
 
-    const schedule = (fn: () => void, delay: number) => {
-      timers.current.push(setTimeout(fn, delay))
+    if (!sessionId) return
+
+    let isCancelled = false
+    let es: EventSource | null = null
+
+    function connectSSE(sid: string) {
+      if (isCancelled) return
+      
+      const sseUrl = `${API_BASE}/runs/${sid}/stream`
+      es = new EventSource(sseUrl)
+      esRef.current = es
+
+      es.onmessage = (e) => {
+        try {
+          const event = JSON.parse(e.data) as SSEEvent
+          handleSSEEvent(event)
+        } catch {
+          // Ignore non-JSON messages (keepalive comments etc.)
+        }
+      }
+
+      es.onerror = () => {
+        if (es?.readyState === EventSource.CLOSED) {
+          es.close()
+        }
+      }
     }
 
-    let t = 400
-    AGENT_ORDER.forEach((agent, i) => {
-      schedule(() => {
-        setStepIndex(i + 1)
-        setActiveAgent(agent)
-        setAgentStates((prev) => ({ ...prev, [agent]: { status: 'running', output: '' } }))
+    // First, try to load existing session data (for page reloads of completed runs)
+    getSession(sessionId).then((result) => {
+      if (isCancelled) return
 
-        // Stream tokens progressively
-        const fullText = MOCK_OUTPUTS[agent]
-        const chars = fullText.split('')
-        let acc = ''
-        chars.forEach((ch, ci) => {
-          schedule(() => {
-            acc += ch
-            setAgentStates((prev) => ({ ...prev, [agent]: { status: 'running', output: acc } }))
-          }, t + ci * 6)
+      if (!result.ok) {
+        connectSSE(sessionId)
+        return
+      }
+
+      const detail = result.data
+
+      // Map completed agent outputs
+      const agentMap: Partial<Record<AgentType, { output: string }>> = {}
+      if (detail.intake) agentMap.context_analyst = { output: detail.intake.output }
+      if (detail.prd) agentMap.pm = { output: detail.prd.output }
+      if (detail.architect_response) agentMap.architect = { output: detail.architect_response.output }
+      if (detail.uiux_response) agentMap.uiux_designer = { output: detail.uiux_response.output }
+      if (detail.engineer_response) agentMap.engineer = { output: detail.engineer_response.output }
+      if (detail.qa_response) agentMap.qa = { output: detail.qa_response.output }
+      if (detail.final_package) agentMap.release_manager = { output: detail.final_package.output }
+
+      // If we have completed agents, populate state
+      const completedCount = Object.keys(agentMap).length
+      if (completedCount > 0) {
+        setAgentStates((prev) => {
+          const next = { ...prev }
+          for (const [agent, data] of Object.entries(agentMap)) {
+            next[agent as AgentType] = { status: 'done', output: data.output }
+          }
+          return next
         })
+        setStepIndex(Math.min(completedCount, 9))
+      }
 
-        schedule(() => {
-          setAgentStates((prev) => ({ ...prev, [agent]: { status: 'done', output: fullText } }))
-        }, t + chars.length * 6 + 100)
-      }, t)
-      t += 1500
+      // If conflicts exist
+      if (detail.conflicts && detail.conflicts.length > 0) {
+        setConflicts(
+          detail.conflicts.map((c) => ({
+            id: c.conflict_id,
+            agentsInvolved: c.agents_involved,
+            summary: c.summary,
+            resolution: c.resolution,
+            rationale: c.rationale,
+          }))
+        )
+      }
+
+      // If session is already complete, skip SSE
+      if (detail.final_package && completedCount === 7) {
+        setStepIndex(9)
+        setActiveAgent(null)
+        setPackageReady(true)
+        // Determine verdict from QA output or default
+        const qaOutput = detail.qa_response?.output || ''
+        if (qaOutput.includes('SHIPPABLE')) {
+          setVerdict('SHIPPABLE')
+        } else if (qaOutput.includes('NEEDS_REVISION')) {
+          setVerdict('NEEDS_REVISION')
+        } else {
+          setVerdict('SHIPPABLE')
+        }
+        return // Don't connect SSE for completed sessions
+      }
+
+      // Connect SSE for live streaming if not complete
+      connectSSE(sessionId)
     })
 
-    // Conflicts appear after debate (after architect + engineer + qa done, before release manager)
-    schedule(() => setConflicts([MOCK_CONFLICTS[0]]), t - 1200)
-    schedule(() => setConflicts(MOCK_CONFLICTS), t - 600)
-
-    schedule(() => {
-      setActiveAgent(null)
-      setStepIndex(9)
-      setVerdict('SHIPPABLE')
-      setPackageReady(true)
-    }, t + 600)
-
-    return () => timers.current.forEach(clearTimeout)
-  }, [])
+    return () => {
+      isCancelled = true
+      if (es) {
+        es.close()
+      }
+      esRef.current = null
+    }
+  }, [handleSSEEvent])
 
   const isRunning = stepIndex < 9
 
@@ -227,12 +327,24 @@ export default function RunViewPage() {
           verdict={verdict}
         />
 
+        {error && (
+          <div className="mx-6 mt-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25 text-[13px] text-red-400">
+            ⚠ {error}
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
           <AgentPanelGrid agentStates={agentStates} activeAgent={activeAgent} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-[360px]">
             <ConflictLogPanel conflicts={conflicts} />
-            <FinalPackagePanel verdict={verdict || 'RUNNING'} ready={packageReady} />
+            <FinalPackagePanel
+              verdict={verdict || 'RUNNING'}
+              ready={packageReady}
+              engineerOutput={agentStates.engineer?.output || null}
+              qaOutput={agentStates.qa?.output || null}
+              packageData={finalPackageData}
+            />
           </div>
         </div>
       </div>

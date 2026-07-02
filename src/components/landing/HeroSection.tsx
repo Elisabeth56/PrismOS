@@ -1,11 +1,12 @@
 'use client'
-// src/components/landing/HeroSection.tsx
+// REPLACES: src/components/landing/HeroSection.tsx
 
 import { useEffect, useRef } from 'react'
-import { motion, Variants } from 'framer-motion'
+import { motion } from 'framer-motion'
 
 interface HeroSectionProps {
   onWaitlist: () => void
+  onWatchDemo: () => void
 }
 
 // Minimal canvas particle system — lightweight, no deps
@@ -30,7 +31,6 @@ function ParticleCanvas() {
     resize()
     window.addEventListener('resize', resize)
 
-    // Seed particles
     for (let i = 0; i < 80; i++) {
       particles.push({
         x: Math.random() * window.innerWidth,
@@ -79,85 +79,59 @@ function ParticleCanvas() {
   )
 }
 
-const fadeUp: Variants = {
+const fadeUp = {
   hidden: { opacity: 0, y: 28 },
   visible: (i = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1], delay: i * 0.12 },
+    transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] as [number, number, number, number], delay: i * 0.12 },
   }),
 }
 
-export default function HeroSection({ onWaitlist }: HeroSectionProps) {
+export default function HeroSection({ onWaitlist, onWatchDemo }: HeroSectionProps) {
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
       {/* ── Deep black base ── */}
       <div className="absolute inset-0 bg-black z-0" />
 
-      {/* ── Aurora layer 1 — orange bloom from bottom-left ── */}
+      {/* ── Fine dot grid — technical, "operating system" texture, fades toward edges ── */}
       <div
-        className="absolute z-[2] pointer-events-none"
+        className="absolute inset-0 z-[1] pointer-events-none"
         style={{
-          bottom: '-10%',
-          left: '-5%',
-          width: '55%',
-          height: '70%',
-          background:
-            'radial-gradient(ellipse at 30% 80%, rgba(245,158,11,0.22) 0%, rgba(249,115,22,0.12) 35%, transparent 70%)',
-          filter: 'blur(60px)',
-          animation: 'aurora-drift-slow 14s ease-in-out infinite',
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.16) 1px, transparent 1px)',
+          backgroundSize: '32px 32px',
+          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 0%, transparent 75%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 0%, transparent 75%)',
         }}
         aria-hidden="true"
       />
 
-      {/* ── Aurora layer 2 — blue/indigo from bottom-right ── */}
+      {/* ── Soft glow orb — amber, upper-left, slow drift ── */}
       <div
         className="absolute z-[2] pointer-events-none"
         style={{
-          bottom: '-15%',
-          right: '-10%',
-          width: '60%',
-          height: '75%',
-          background:
-            'radial-gradient(ellipse at 70% 80%, rgba(59,130,246,0.20) 0%, rgba(99,102,241,0.10) 40%, transparent 70%)',
-          filter: 'blur(70px)',
-          animation: 'aurora-drift-slow 18s ease-in-out infinite reverse',
-        }}
-        aria-hidden="true"
-      />
-
-      {/* ── Aurora layer 3 — central vertical column ── */}
-      <div
-        className="absolute z-[2] pointer-events-none"
-        style={{
-          bottom: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '40%',
-          height: '65%',
-          background:
-            'linear-gradient(to top, rgba(245,158,11,0.15) 0%, rgba(139,92,246,0.08) 40%, transparent 100%)',
+          top: '8%',
+          left: '12%',
+          width: '420px',
+          height: '420px',
+          background: 'radial-gradient(circle, rgba(245,158,11,0.16) 0%, transparent 70%)',
           filter: 'blur(50px)',
-          animation: 'aurora-drift 10s ease-in-out infinite',
+          animation: 'orb-drift-a 16s ease-in-out infinite',
         }}
         aria-hidden="true"
       />
 
-      {/* ── Planet horizon arc ── */}
+      {/* ── Soft glow orb — blue, lower-right, slow drift ── */}
       <div
-        className="absolute z-[3] pointer-events-none"
+        className="absolute z-[2] pointer-events-none"
         style={{
-          bottom: '-80px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 'min(1100px, 120vw)',
-          height: '440px',
-          borderRadius: '50%',
-          border: '1px solid rgba(245,158,11,0.18)',
-          boxShadow:
-            '0 -24px 80px rgba(245,158,11,0.08), 0 -4px 30px rgba(99,102,241,0.10), inset 0 40px 80px rgba(0,0,0,0.5)',
-          background:
-            'radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.06) 0%, transparent 60%)',
+          bottom: '5%',
+          right: '10%',
+          width: '460px',
+          height: '460px',
+          background: 'radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 70%)',
+          filter: 'blur(55px)',
+          animation: 'orb-drift-b 20s ease-in-out infinite',
         }}
         aria-hidden="true"
       />
@@ -170,7 +144,7 @@ export default function HeroSection({ onWaitlist }: HeroSectionProps) {
         className="absolute inset-0 z-[4] pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse 80% 60% at 50% 100%, transparent 0%, rgba(0,0,0,0.7) 100%)',
+            'radial-gradient(ellipse 90% 70% at 50% 50%, transparent 40%, rgba(0,0,0,0.75) 100%)',
         }}
         aria-hidden="true"
       />
@@ -227,7 +201,7 @@ export default function HeroSection({ onWaitlist }: HeroSectionProps) {
           Seven specialized agents — from Context Analyst to Release Manager — coordinate in real time to turn any feature request into production-ready code.
         </motion.p>
 
-        {/* CTAs */}
+        {/* CTAs — Watch Demo / Try Live Demo / Start building */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
@@ -235,26 +209,38 @@ export default function HeroSection({ onWaitlist }: HeroSectionProps) {
           custom={3}
           className="flex flex-col sm:flex-row items-center gap-3"
         >
-          <button
-            onClick={onWaitlist}
-            className="group relative bg-white text-black font-semibold text-[14px] px-8 py-3.5 rounded-full hover:opacity-88 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
-          >
-            Start building →
-          </button>
           <a
-            href="#benchmark"
-            className="text-[14px] font-medium text-white/50 border border-white/[0.12] px-8 py-3.5 rounded-full hover:text-white hover:border-white/25 transition-all duration-200"
+            href="/demo"
+            className="bg-white text-black font-semibold text-[14px] px-8 py-3.5 rounded-full hover:opacity-88 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
           >
-            See the benchmark
+            Try live demo →
           </a>
+          <button
+            onClick={onWatchDemo}
+            className="flex items-center gap-2 text-[14px] font-medium text-white/70 border border-white/[0.14] px-8 py-3.5 rounded-full hover:text-white hover:border-white/25 transition-all duration-200"
+          >
+            <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[9px]">▶</span>
+            Watch demo
+          </button>
         </motion.div>
+
+        <motion.button
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={4}
+          onClick={onWaitlist}
+          className="mt-4 text-[12px] text-white/35 hover:text-white/60 underline underline-offset-4 decoration-white/20 transition-colors duration-200"
+        >
+          or join the waitlist for early access
+        </motion.button>
 
         {/* Scroll hint */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.4, duration: 0.8 }}
-          className="mt-16 flex flex-col items-center gap-2 text-white/20"
+          className="mt-12 flex flex-col items-center gap-2 text-white/20"
         >
           <span className="text-[11px] tracking-widest uppercase font-medium">Scroll</span>
           <div className="w-px h-8 bg-gradient-to-b from-white/20 to-transparent" />
