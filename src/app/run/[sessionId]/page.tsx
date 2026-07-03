@@ -10,7 +10,6 @@ import FinalPackagePanel from '@/components/run/FinalPackagePanel'
 import { AgentType, Verdict, SSEEvent } from '@/lib/types'
 import { AGENT_ORDER } from '@/lib/constants'
 import { API_BASE, getSession } from '@/lib/api'
-import { getSessionToken } from '@/lib/useSessionToken'
 
 const STEP_LABELS = [
   'Step 0 — Loading project memory',

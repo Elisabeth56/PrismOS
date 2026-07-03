@@ -1,6 +1,7 @@
 'use client'
 // NEW FILE: src/app/architecture/page.tsx
 
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { AGENT_CONFIG, AGENT_ORDER, WORKFLOW_STEPS } from '@/lib/constants'
 
@@ -17,13 +18,11 @@ export default function ArchitecturePage() {
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-16">
         {/* Header */}
         <div className="mb-14">
-          <div className="flex items-center gap-2 mb-4">
-            <a href="/" className="font-display text-[16px] font-bold tracking-tight text-white">
-              Prism<span className="text-amber-400">OS</span>
-            </a>
-            <span className="text-white/20">/</span>
-            <span className="text-[13px] text-white/50">Architecture</span>
-          </div>
+          <div className="flex items-center gap-2 mb-1">
+        <Link href="/" className="text-[12px] text-white/30 hover:text-white/60 transition-colors">Home</Link>
+        <span className="text-white/20 text-[11px]">/</span>
+        <span className="text-[12px] text-white/60">Architecture</span>
+      </div>
           <h1 className="font-display text-[clamp(32px,4vw,48px)] font-bold tracking-tight text-white mb-4">
             How PrismOS works
           </h1>

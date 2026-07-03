@@ -59,122 +59,126 @@ export default function ProductShowcase() {
                 <div className="w-20" />
               </div>
 
-              {/* Mini dashboard mockup — built from the same tokens as the real dashboard,
-                  so this reads as an actual screenshot rather than a generic placeholder.
-                  Swap for <Image>/<video> once a real capture exists, same aspect-ratio wrapper. */}
+              {/* Dashboard emulation — mirrors the real /dashboard layout (Topbar, Sidebar,
+                  StatsGrid, SessionsTable) at legible sizes so it reads as an actual screenshot.
+                  Swap for <Image>/<video> of the real page once Tailwind rendering is confirmed. */}
               <div className="relative aspect-[16/9] w-full">
                 <div
-                  className="absolute inset-0 flex"
+                  className="absolute inset-0 flex flex-col"
                   style={{ background: 'linear-gradient(135deg, #0a0a10 0%, #0d0d15 50%, #08080d 100%)' }}
                 >
-                  {/* Mini sidebar */}
-                  <div className="w-[15%] min-w-[86px] border-r border-white/[0.06] flex flex-col py-3 px-2 gap-3">
-                    <div className="flex items-center gap-1.5 px-1">
-                      <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'linear-gradient(135deg,#f59e0b,#3b82f6)' }} />
-                      <div className="h-1 w-8 rounded-full bg-white/20" />
+                  {/* Topbar */}
+                  <div className="flex items-center gap-4 px-4 py-2.5 border-b border-white/[0.06] flex-shrink-0">
+                    <span className="font-display text-[13px] font-bold text-white">
+                      Prism<span className="text-amber-400">OS</span>
+                    </span>
+                    <div className="w-px h-4 bg-white/[0.08]" />
+                    <span className="text-[11px] font-semibold text-white/70 flex items-center gap-1.5">
+                      <span className="text-amber-400">✦</span> Command Center
+                    </span>
+                    <div className="flex-1 max-w-[180px] mx-auto h-6 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center px-3">
+                      <span className="text-[10px] text-white/25">⌕ Search runs...</span>
                     </div>
-                    <div className="rounded-md bg-white/[0.05] border border-white/[0.08] px-1.5 py-1.5 flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f59e0b,#3b82f6)' }} />
-                      <div className="h-1 w-6 rounded-full bg-white/25" />
+                    <div className="ml-auto flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ animation: 'pulse-glow 2s ease-in-out infinite' }} />
+                        <span className="text-[9px] font-medium text-emerald-400">All agents online</span>
+                      </div>
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-black" style={{ background: 'linear-gradient(135deg,#f59e0b,#f97316)' }}>
+                        JD
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-1.5 mt-1">
-                      {[
-                        { active: true, w: 60 },
-                        { active: false, w: 45 },
-                        { active: false, w: 50 },
-                        { active: false, w: 40 },
-                        { active: false, w: 55 },
-                      ].map((item, i) => (
-                        <div
-                          key={i}
-                          className={`flex items-center gap-1.5 px-1.5 py-1.5 rounded-md ${item.active ? 'bg-white/[0.06]' : ''}`}
-                        >
-                          <div className={`w-1.5 h-1.5 rounded-sm ${item.active ? 'bg-white/50' : 'bg-white/15'}`} />
-                          <div className={`h-1 rounded-full ${item.active ? 'bg-white/35' : 'bg-white/10'}`} style={{ width: `${item.w}%` }} />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex-1" />
-                    <div className="rounded-md h-5" style={{ background: 'rgba(255,255,255,0.9)' }} />
                   </div>
 
-                  {/* Main content */}
-                  <div className="flex-1 flex flex-col min-w-0">
-                    {/* Mini topbar */}
-                    <div className="h-8 border-b border-white/[0.06] flex items-center px-4 gap-3 flex-shrink-0">
-                      <div className="h-1 w-10 rounded-full bg-white/15" />
-                      <div className="flex-1 max-w-[140px] h-3.5 rounded-full bg-white/[0.05] border border-white/[0.08]" />
-                      <div className="ml-auto flex items-center gap-1.5">
-                        <div className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2 py-0.5">
-                          <span className="w-1 h-1 rounded-full bg-emerald-400" />
-                          <div className="h-1 w-8 rounded-full bg-emerald-400/40" />
+                  <div className="flex flex-1 min-h-0">
+                    {/* Sidebar */}
+                    <div className="w-[150px] flex-shrink-0 border-r border-white/[0.06] flex flex-col py-3 px-2.5 gap-3">
+                      <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-2">
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-bold text-black flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f59e0b,#3b82f6)' }}>
+                          F
                         </div>
-                        <div className="w-4 h-4 rounded-full" style={{ background: 'linear-gradient(135deg,#f59e0b,#f97316)' }} />
+                        <div className="min-w-0">
+                          <div className="text-[9px] font-semibold text-white truncate">Fintech App</div>
+                          <div className="text-[8px] text-white/35">14 memory entries</div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        {[
+                          { icon: '⌂', label: 'Overview', active: true },
+                          { icon: '◈', label: 'Projects', active: false },
+                          { icon: '✦', label: 'Sessions', active: false },
+                          { icon: '⚖', label: 'Conflicts', active: false },
+                          { icon: '◇', label: 'Benchmark', active: false },
+                          { icon: '⚙', label: 'Settings', active: false },
+                        ].map((item) => (
+                          <div
+                            key={item.label}
+                            className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-[9.5px] font-medium ${
+                              item.active ? 'bg-white/[0.07] text-white' : 'text-white/40'
+                            }`}
+                          >
+                            <span className="text-[10px] opacity-70">{item.icon}</span>
+                            {item.label}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex-1" />
+                      <div className="rounded-lg py-1.5 text-center text-[9.5px] font-bold text-black" style={{ background: '#fff' }}>
+                        ✦ New run
                       </div>
                     </div>
 
-                    {/* Body */}
-                    <div className="flex-1 p-4 flex flex-col gap-3 min-h-0">
-                      {/* Stat cards row */}
+                    {/* Main content */}
+                    <div className="flex-1 p-3.5 flex flex-col gap-3 min-w-0">
+                      <div className="flex-shrink-0">
+                        <div className="text-[13px] font-bold text-white">Run overview</div>
+                        <div className="text-[9px] text-white/35">All agent sessions · Last 30 days</div>
+                      </div>
+
+                      {/* Stat cards */}
                       <div className="grid grid-cols-4 gap-2 flex-shrink-0">
                         {[
-                          { v: '24', c: '#3b82f6' },
-                          { v: '19', c: '#22c55e' },
-                          { v: '47', c: '#f59e0b' },
-                          { v: '2.4m', c: '#8b5cf6' },
-                        ].map((stat, i) => (
-                          <div key={i} className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-2.5 py-2">
-                            <div className="w-3.5 h-3.5 rounded-md mb-1.5" style={{ background: `${stat.c}25` }} />
-                            <div className="text-[10px] font-bold text-white/70">{stat.v}</div>
-                            <div className="h-1 w-8 rounded-full bg-white/10 mt-1" />
+                          { icon: '◈', v: '24', label: 'Total runs', c: '#3b82f6' },
+                          { icon: '✓', v: '19', label: 'Shippable', c: '#22c55e' },
+                          { icon: '⚖', v: '47', label: 'Conflicts', c: '#f59e0b' },
+                          { icon: '⚡', v: '2.4m', label: 'Avg. time', c: '#8b5cf6' },
+                        ].map((stat) => (
+                          <div key={stat.label} className="rounded-lg bg-white/[0.03] border border-white/[0.07] px-2.5 py-2">
+                            <div className="w-5 h-5 rounded-md flex items-center justify-center text-[9px] mb-1.5" style={{ background: `${stat.c}20`, color: stat.c }}>
+                              {stat.icon}
+                            </div>
+                            <div className="text-[13px] font-bold text-white leading-none">{stat.v}</div>
+                            <div className="text-[8.5px] text-white/35 mt-1">{stat.label}</div>
                           </div>
                         ))}
                       </div>
 
-                      {/* Agent run row — the money shot */}
-                      <div className="flex-1 rounded-lg bg-white/[0.03] border border-white/[0.06] p-3 flex flex-col gap-2 min-h-0">
-                        <div className="flex items-center justify-between flex-shrink-0">
-                          <div className="h-1.5 w-24 rounded-full bg-white/20" />
-                          <div className="flex items-center gap-1 bg-blue-500/10 border border-blue-500/20 rounded-full px-2 py-0.5">
-                            <span className="w-1 h-1 rounded-full bg-blue-400" style={{ animation: 'pulse-glow 1.5s ease-in-out infinite' }} />
-                            <div className="h-1 w-6 rounded-full bg-blue-400/50" />
-                          </div>
+                      {/* Sessions table */}
+                      <div className="flex-1 rounded-lg bg-white/[0.03] border border-white/[0.07] overflow-hidden flex flex-col min-h-0">
+                        <div className="grid grid-cols-[2.5fr_1fr_1fr] px-3 py-1.5 border-b border-white/[0.06] text-[8px] font-bold uppercase tracking-wide text-white/30 flex-shrink-0">
+                          <div>Feature request</div>
+                          <div>Verdict</div>
+                          <div className="text-right">Time</div>
                         </div>
-                        <div className="grid grid-cols-7 gap-1.5 flex-1 min-h-0">
-                          {[
-                            { c: '#10b981', done: true },
-                            { c: '#f97316', done: true },
-                            { c: '#f59e0b', done: true },
-                            { c: '#f43f5e', done: true },
-                            { c: '#3b82f6', done: false },
-                            { c: '#14b8a6', done: false },
-                            { c: '#8b5cf6', done: false },
-                          ].map((agent, i) => (
-                            <div
-                              key={i}
-                              className="rounded-md p-1.5 flex flex-col gap-1"
-                              style={{
-                                background: 'rgba(255,255,255,0.03)',
-                                borderTop: `1.5px solid ${agent.c}`,
-                                opacity: agent.done ? 1 : 0.4,
-                              }}
-                            >
-                              <div className="w-1 h-1 rounded-full" style={{ background: agent.c }} />
-                              {[70, 90, 50].map((w, j) => (
-                                <div
-                                  key={j}
-                                  className="h-[3px] rounded-full"
-                                  style={{
-                                    width: `${w}%`,
-                                    background: agent.c,
-                                    opacity: agent.done ? 0.45 : 0.2,
-                                    animation: agent.done ? undefined : `shimmer-line ${1.4 + i * 0.15 + j * 0.1}s ease-in-out infinite`,
-                                  }}
-                                />
-                              ))}
+                        {[
+                          { req: 'Add OTP login to a fintech app', verdict: 'SHIPPABLE', color: '#4ade80', time: '2m 18s' },
+                          { req: 'Build real-time chat with WebSockets', verdict: 'SHIPPABLE', color: '#4ade80', time: '3m 04s' },
+                          { req: 'Add Stripe payment integration', verdict: 'NEEDS REVISION', color: '#fbbf24', time: '4m 41s' },
+                          { req: 'Implement rate limiting middleware', verdict: 'SHIPPABLE', color: '#4ade80', time: '1m 52s' },
+                        ].map((row) => (
+                          <div key={row.req} className="grid grid-cols-[2.5fr_1fr_1fr] px-3 py-2 border-b border-white/[0.04] last:border-0 items-center">
+                            <div className="text-[9.5px] text-white/75 truncate pr-2">&quot;{row.req}&quot;</div>
+                            <div>
+                              <span
+                                className="text-[8px] font-bold px-1.5 py-0.5 rounded-full"
+                                style={{ color: row.color, background: `${row.color}20` }}
+                              >
+                                {row.verdict}
+                              </span>
                             </div>
-                          ))}
-                        </div>
+                            <div className="text-[9px] text-white/35 text-right">{row.time}</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -185,7 +189,7 @@ export default function ProductShowcase() {
                   className="absolute inset-0 pointer-events-none z-10"
                   style={{
                     background:
-                      'linear-gradient(to bottom, transparent 60%, rgba(10,10,16,0.9) 100%)',
+                      'linear-gradient(to bottom, transparent 65%, rgba(10,10,16,0.85) 100%)',
                   }}
                   aria-hidden="true"
                 />
@@ -193,7 +197,7 @@ export default function ProductShowcase() {
                   className="absolute inset-0 pointer-events-none z-10"
                   style={{
                     background:
-                      'linear-gradient(to right, rgba(10,10,16,0.3) 0%, transparent 15%, transparent 85%, rgba(10,10,16,0.3) 100%)',
+                      'linear-gradient(to right, rgba(10,10,16,0.25) 0%, transparent 12%, transparent 88%, rgba(10,10,16,0.25) 100%)',
                   }}
                   aria-hidden="true"
                 />

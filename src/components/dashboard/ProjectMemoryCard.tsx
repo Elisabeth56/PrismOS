@@ -33,6 +33,7 @@ export default function ProjectMemoryCard({ projectId, projectName, entries: pro
 
   useEffect(() => {
     if (propEntries) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEntries(propEntries)
       return
     }

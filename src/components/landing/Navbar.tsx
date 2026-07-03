@@ -2,6 +2,7 @@
 // REPLACES: src/components/landing/Navbar.tsx
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NAV_LINKS } from '@/lib/constants'
 
@@ -31,33 +32,33 @@ export default function Navbar({ onWaitlist }: NavbarProps) {
       }`}
     >
       {/* Logo */}
-      <a href="/" className="font-display text-xl font-bold tracking-tight text-white">
+      <Link href="/" className="font-display text-xl font-bold tracking-tight text-white">
         Prism<span className="text-amber-400">OS</span>
-      </a>
+      </Link>
 
       {/* Desktop nav links - pill container */}
       <div className="hidden md:flex items-center gap-1 bg-white/[0.05] border border-white/[0.08] rounded-full px-2 py-1.5">
         {NAV_LINKS.map((link) => (
-          <a
+          <Link
             key={link.href}
             href={link.href}
             className="text-[13px] font-medium text-white/60 hover:text-white px-4 py-1.5 rounded-full transition-all duration-200 hover:bg-white/[0.07]"
           >
             {link.label}
-          </a>
+          </Link>
         ))}
-        <a
+        <Link
           href="/demo"
           className="text-[13px] font-medium text-white/60 hover:text-white px-4 py-1.5 rounded-full transition-all duration-200 hover:bg-white/[0.07]"
         >
           Demo
-        </a>
-        <a
+        </Link>
+        <Link
           href="/dashboard"
           className="text-[13px] font-medium text-white/60 hover:text-white px-4 py-1.5 rounded-full transition-all duration-200 hover:bg-white/[0.07]"
         >
           Dashboard
-        </a>
+        </Link>
       </div>
 
       {/* CTA */}
@@ -92,29 +93,29 @@ export default function Navbar({ onWaitlist }: NavbarProps) {
             className="absolute top-16 left-0 right-0 bg-black/95 backdrop-blur-2xl border-b border-white/[0.06] flex flex-col px-6 py-4 gap-1 md:hidden"
           >
             {NAV_LINKS.map((link) => (
-              <a
+              <Link
                 key={link.href}
                 href={link.href}
                 className="text-[15px] text-white/70 hover:text-white py-3 border-b border-white/[0.06] transition-colors"
                 onClick={() => setMenuOpen(false)}
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
-            <a
+            <Link
               href="/demo"
               className="text-[15px] text-white/70 hover:text-white py-3 border-b border-white/[0.06] transition-colors"
               onClick={() => setMenuOpen(false)}
             >
               Demo
-            </a>
-            <a
+            </Link>
+            <Link
               href="/dashboard"
               className="text-[15px] text-white/70 hover:text-white py-3 border-b border-white/[0.06] last:border-0 transition-colors"
               onClick={() => setMenuOpen(false)}
             >
               Dashboard
-            </a>
+            </Link>
             <button
               onClick={() => { setMenuOpen(false); onWaitlist() }}
               className="mt-3 text-[14px] font-semibold bg-white text-black px-5 py-2.5 rounded-full"

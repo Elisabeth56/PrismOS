@@ -8,7 +8,6 @@ import Sidebar from '@/components/dashboard/Sidebar'
 import StatsGrid from '@/components/dashboard/StatsGrid'
 import ProjectMemoryCard from '@/components/dashboard/ProjectMemoryCard'
 import SessionsTable from '@/components/dashboard/SessionsTable'
-import { Session } from '@/lib/types'
 
 export default function DemoDashboardPage() {
   const router = useRouter()

@@ -20,6 +20,7 @@ export function useSessionToken(): string {
       existing = crypto.randomUUID()
       localStorage.setItem(STORAGE_KEY, existing)
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setToken(existing)
   }, [])
 

@@ -3,9 +3,10 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import VerdictBadge from '@/components/shared/VerdictBadge'
-import { getProjectMemory, getSessions } from '@/lib/api'
+import { getProjectMemory, getSessions, getProjects } from '@/lib/api'
 import { Verdict } from '@/lib/types'
 
 type EntryType = 'architecture_decision' | 'shipped_feature' | 'conflict_resolution' | 'ux_decision' | 'known_constraint'
@@ -80,6 +81,16 @@ export default function ProjectDetailPage() {
     if (!projectId) return
 
     const fetchData = async () => {
+      // Fetch project details
+      const projResult = await getProjects()
+      if (projResult.ok) {
+        const proj = projResult.data.projects.find((p) => p.id === projectId)
+        if (proj) {
+          setProjectName(proj.name)
+          setProjectDesc(proj.description)
+        }
+      }
+
       // Fetch memory entries
       const memResult = await getProjectMemory(projectId)
       if (memResult.ok) {
@@ -144,9 +155,9 @@ export default function ProjectDetailPage() {
         {/* Breadcrumb + header */}
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-3">
-            <a href="/dashboard" className="text-[12px] text-white/30 hover:text-white/60 transition-colors">Dashboard</a>
+            <Link href="/dashboard" className="text-[12px] text-white/30 hover:text-white/60 transition-colors">Dashboard</Link>
             <span className="text-white/20 text-[11px]">/</span>
-            <a href="/projects" className="text-[12px] text-white/30 hover:text-white/60 transition-colors">Projects</a>
+            <Link href="/projects" className="text-[12px] text-white/30 hover:text-white/60 transition-colors">Projects</Link>
             <span className="text-white/20 text-[11px]">/</span>
             <span className="text-[12px] text-white/60">{projectName}</span>
           </div>
@@ -158,10 +169,10 @@ export default function ProjectDetailPage() {
               </div>
               <p className="text-[13px] text-white/40">{projectDesc || 'Loading project details…'}</p>
             </div>
-            <a href="/run/new"
+            <Link href="/run/new"
               className="bg-white text-black font-semibold text-[13px] px-5 py-2.5 rounded-full hover:opacity-88 transition-all duration-200 hover:-translate-y-px whitespace-nowrap">
               + New run
-            </a>
+            </Link>
           </div>
 
           {/* Project stats */}

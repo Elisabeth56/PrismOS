@@ -2,6 +2,7 @@
 // PLACE AT: src/app/settings/page.tsx
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { updateProject } from '@/lib/api'
 
@@ -13,7 +14,9 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState<string | null>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setApiBase(process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.prismos.app/api/v1')
+     
     setSessionToken(localStorage.getItem('session_token') || 'Not set — will be generated on first run')
   }, [])
 
@@ -46,7 +49,7 @@ export default function SettingsPage() {
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-1">
-            <a href="/dashboard" className="text-[12px] text-white/30 hover:text-white/60 transition-colors">Dashboard</a>
+            <Link href="/dashboard" className="text-[12px] text-white/30 hover:text-white/60 transition-colors">Dashboard</Link>
             <span className="text-white/20 text-[11px]">/</span>
             <span className="text-[12px] text-white/60">Settings</span>
           </div>
@@ -94,7 +97,7 @@ export default function SettingsPage() {
                   <div className="text-[13px] text-white font-medium">Memory entries</div>
                   <div className="text-[11px] text-white/35 mt-0.5">38 entries stored for Fintech App</div>
                 </div>
-                <a href="/projects/proj-1" className="text-[12px] text-blue-400 hover:text-blue-300 transition-colors">View all →</a>
+                <Link href="/projects/proj-1" className="text-[12px] text-blue-400 hover:text-blue-300 transition-colors">View all →</Link>
               </div>
               <div className="flex items-center justify-between py-2">
                 <div>

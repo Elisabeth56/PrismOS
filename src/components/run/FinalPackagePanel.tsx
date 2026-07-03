@@ -65,18 +65,88 @@ const MOCK_BENCHMARK = [
   { metric: 'Ship verdict', baseline: 'None', prismos: 'SHIPPABLE' },
 ]
 
+function parseFiles(output: string): { path: string; content: string }[] {
+  const files: { path: string; content: string }[] = []
+  const regex = /```(?:\w+)?\n([\s\S]*?)```/g
+  let match
+  let i = 1
+
+  while ((match = regex.exec(output)) !== null) {
+    let content = match[1]
+    let path = `file_${i}.txt`
+    
+    // Attempt to guess filename from first line comment
+    const firstLine = content.split('\n')[0].trim()
+    if (firstLine.includes('.') && (firstLine.startsWith('//') || firstLine.startsWith('#') || firstLine.startsWith('/*'))) {
+      const possibleName = firstLine.replace(/[\/\/#*]/g, '').trim()
+      if (possibleName && possibleName.includes('.')) {
+        path = possibleName
+        content = content.substring(content.indexOf('\n') + 1)
+      }
+    } else if (firstLine.startsWith('// src/') || firstLine.startsWith('// app/')) {
+        path = firstLine.replace('//', '').trim()
+        content = content.substring(content.indexOf('\n') + 1)
+    } else {
+        // Look for extension in language hint
+        const blockHeader = output.substring(match.index, match.index + 20)
+        if (blockHeader.includes('typescript') || blockHeader.includes('ts')) path = `file_${i}.ts`
+        else if (blockHeader.includes('tsx')) path = `file_${i}.tsx`
+        else if (blockHeader.includes('javascript') || blockHeader.includes('js')) path = `file_${i}.js`
+        else if (blockHeader.includes('python') || blockHeader.includes('py')) path = `file_${i}.py`
+    }
+    
+    files.push({ path, content: content.trim() })
+    i++
+  }
+
+  if (files.length === 0) {
+    return [{ path: 'implementation.txt', content: output }]
+  }
+  return files
+}
+
 export default function FinalPackagePanel({ verdict, ready, engineerOutput, qaOutput, packageData }: FinalPackagePanelProps) {
   const [tab, setTab] = useState<Tab>('code')
   const [zipping, setZipping] = useState(false)
 
-  // Bundles MOCK_CODE_FILES client-side and triggers a save — no server round-trip.
-  // When real SSE data replaces the mock array, this function needs zero changes;
-  // it only ever reads from the files list already in component state.
+  const codeFiles = packageData?.code
+    ? parseFiles(String(packageData.code))
+    : engineerOutput
+    ? parseFiles(engineerOutput)
+    : MOCK_CODE_FILES;
+
+  const testsOutput = packageData?.tests || qaOutput;
+
+  // Bundles codeFiles client-side and triggers a save — no server round-trip.
   const handleDownloadCode = async () => {
     setZipping(true)
     try {
       const zip = new JSZip()
-      MOCK_CODE_FILES.forEach((file) => zip.file(file.path, file.content))
+      const folderName = `prismos-feature-${Math.floor(Date.now() / 1000)}`
+      const folder = zip.folder(folderName)
+
+      if (folder) {
+        codeFiles.forEach((file) => folder.file(file.path, file.content))
+
+        const readmeContent = `# PrismOS Generated Package
+
+## Feature Request
+${packageData?.feature_request || 'N/A'}
+
+## Architecture Summary
+${packageData?.architecture_summary || 'N/A'}
+
+## QA & Testing Validation
+${testsOutput || 'N/A'}
+
+## How to get it working
+1. Review the generated files above.
+2. Integrate the code files into your existing codebase according to the architecture summary.
+3. Run the provided QA tests to verify the implementation.
+`
+        folder.file('README.md', readmeContent)
+      }
+
       const blob = await zip.generateAsync({ type: 'blob' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -150,7 +220,7 @@ export default function FinalPackagePanel({ verdict, ready, engineerOutput, qaOu
         ) : (
           <>
             {tab === 'code' &&
-              MOCK_CODE_FILES.map((file) => (
+              codeFiles.map((file) => (
                 <div key={file.path} className="rounded-xl bg-black/40 p-3.5 mb-2.5">
                   <div className="text-[10px] text-amber-400/80 font-mono mb-2">{file.path}</div>
                   <pre className="text-[10.5px] font-mono text-[#b0c4de] leading-[1.7] overflow-x-auto whitespace-pre">
@@ -161,20 +231,30 @@ export default function FinalPackagePanel({ verdict, ready, engineerOutput, qaOu
 
             {tab === 'tests' && (
               <div>
-                <div className="rounded-xl bg-emerald-500/[0.06] border border-emerald-500/20 p-4 mb-4">
-                  <div className="text-[14px] font-bold text-emerald-400 mb-1">✓ SHIPPABLE</div>
+                <div className={`rounded-xl ${verdict === 'SHIPPABLE' ? 'bg-emerald-500/[0.06] border-emerald-500/20' : 'bg-red-500/[0.06] border-red-500/20'} border p-4 mb-4`}>
+                  <div className={`text-[14px] font-bold ${verdict === 'SHIPPABLE' ? 'text-emerald-400' : 'text-red-400'} mb-1`}>
+                    {verdict === 'SHIPPABLE' ? '✓ SHIPPABLE' : '⚠ NEEDS REVISION'}
+                  </div>
                   <div className="text-[12px] text-white/50 leading-relaxed">
-                    All scenarios passed including frontend-specific checks. Implementation is production-ready.
+                    QA Validation Complete.
                   </div>
                 </div>
-                <div className="flex flex-col gap-0">
-                  {MOCK_TESTS.map((t) => (
-                    <div key={t.label} className="flex items-center gap-2.5 py-2 border-b border-white/[0.05] last:border-0">
-                      <span className="text-emerald-400 text-[12px]">✓</span>
-                      <span className="text-[12px] text-white/55">{t.label}</span>
-                    </div>
-                  ))}
-                </div>
+                {testsOutput ? (
+                  <div className="rounded-xl bg-black/40 p-4">
+                    <pre className="text-[11px] font-mono text-white/70 whitespace-pre-wrap leading-relaxed">
+                      {String(testsOutput)}
+                    </pre>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-0">
+                    {MOCK_TESTS.map((t) => (
+                      <div key={t.label} className="flex items-center gap-2.5 py-2 border-b border-white/[0.05] last:border-0">
+                        <span className="text-emerald-400 text-[12px]">✓</span>
+                        <span className="text-[12px] text-white/55">{t.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

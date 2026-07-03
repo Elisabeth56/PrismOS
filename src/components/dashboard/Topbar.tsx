@@ -2,6 +2,7 @@
 // src/components/dashboard/Topbar.tsx
 
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 
 export default function Topbar() {
   return (
@@ -9,9 +10,9 @@ export default function Topbar() {
       className="relative z-20 flex items-center h-16 px-6 gap-5 border-b border-white/[0.06] flex-shrink-0"
       style={{ background: 'rgba(8,8,12,0.9)', backdropFilter: 'blur(24px)' }}
     >
-      <a href="/" className="font-display text-[16px] font-bold tracking-tight text-white whitespace-nowrap">
+      <Link href="/" className="font-display text-[16px] font-bold tracking-tight text-white whitespace-nowrap">
         Prism<span className="text-amber-400">OS</span>
-      </a>
+      </Link>
 
       <div className="w-px h-5 bg-white/[0.08]" />
 

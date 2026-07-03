@@ -1,91 +1,121 @@
-# PrismOS Frontend
+# PrismOS
 
-## Install
+**PrismOS** is an autonomous AI operating system designed to orchestrate 7 specialized agents to ship features directly into your existing product. Context-aware, conflict-resolving, and production-ready.
 
-```bash
-npx create-next-app@latest prismos --typescript --tailwind --app --src-dir
-cd prismos
-```
+## 🚀 Getting Started
 
-## Dependencies
+### 1. Frontend Setup
 
-```bash
-npm install framer-motion lucide-react clsx
-```
-
-## Required font (add to layout.tsx head)
+First, install the frontend dependencies:
 
 ```bash
-npm install @next/font
+npm install
 ```
 
-Uses: **Inter** (system) + **Syne** (display headings) via Google Fonts
+Then, run the development server:
 
-Add to `src/app/layout.tsx`:
-```tsx
-import { Syne, Inter } from 'next/font/google'
-const syne = Syne({ subsets: ['latin'], variable: '--font-syne', weight: ['700','800'] })
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+```bash
+npm run dev
+# or
+yarn dev
 ```
 
-## File map — FINAL (25 files)
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+### 2. Backend Setup
+
+The backend is a Python FastAPI application. First, ensure you have Python installed, then set up your environment:
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Run the backend server locally:
+
+```bash
+uvicorn main:app --reload --port 8000
+```
+
+## 🧠 Architecture & Agents
+
+PrismOS utilizes a suite of 7 specialized AI agents to take a feature request from concept to shippable code:
+
+1. **Context Analyst**: Maps the existing product structure and constraints.
+2. **PM Agent**: Drafts the Product Requirements Document (PRD).
+3. **Architect**: Designs the system architecture and database schema.
+4. **UI/UX Designer**: Produces the interface specifications and user flows.
+5. **Engineer**: Writes the actual code implementation.
+6. **QA**: Validates edge cases, performance, and security.
+7. **Release Manager**: Resolves conflicts between agents and finalizes the package.
+
+## 📁 Project Structure
 
 ```
 prismos/
-├── README.md
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx                       # Root layout, fonts, metadata
+│   │   ├── globals.css                      # Global styles and tokens
+│   │   ├── page.tsx                         # Landing page
+│   │   ├── dashboard/page.tsx               # Command Center dashboard
+│   │   ├── demo/page.tsx                    # Live streaming demo page
+│   │   ├── projects/[projectId]/page.tsx    # Project memory and run history
+│   │   ├── run/[sessionId]/page.tsx         # Live agent streaming view
+│   │   └── settings/page.tsx                # System configuration
+│   │
+│   ├── components/
+│   │   ├── landing/                         # Landing page components
+│   │   ├── dashboard/                       # Dashboard UI components
+│   │   ├── run/                             # Active run session panels
+│   │   └── shared/                          # Reusable UI elements (Badges, Waitlist)
+│   │
+│   └── lib/
+│       ├── api.ts                           # Backend API utility
+│       ├── constants.ts                     # Configuration, agents, and pricing
+│       ├── types.ts                         # Core TypeScript interfaces
+│       └── useSessionToken.ts               # Anonymous session management
 │
-└── src/
-    ├── app/
-    │   ├── layout.tsx                       # root layout, fonts, metadata
-    │   ├── globals.css                      # tokens, keyframes, utility classes
-    │   ├── page.tsx                         # landing page (assembles all sections)
-    │   └── dashboard/
-    │       └── page.tsx                     # dashboard overview (assembles dashboard components)
-    │
-    ├── components/
-    │   ├── landing/
-    │   │   ├── Navbar.tsx                   # scroll-aware glass nav, mobile menu
-    │   │   ├── HeroSection.tsx              # custom cinematic bg, canvas particles, planet arc
-    │   │   ├── ProductShowcase.tsx          # glass shell, image/video placeholder
-    │   │   ├── LogoStrip.tsx                # "trusted by" row
-    │   │   ├── FeaturesSection.tsx          # Usage/Tech/Data tabs, scroll slide-in cards
-    │   │   ├── AgentsSection.tsx            # 7-agent grid, color-coded by AGENT_CONFIG
-    │   │   ├── KickstartSection.tsx         # 3-step stagger reveal, custom mini-visuals
-    │   │   ├── BenchmarkSection.tsx         # Mode A vs Mode B table
-    │   │   ├── PricingSection.tsx           # monthly/yearly toggle, 3 tiers
-    │   │   ├── FinalCTASection.tsx          # mini-hero bg + oversized PrismOS wordmark
-    │   │   └── Footer.tsx                   # 4-column link footer
-    │   │
-    │   ├── dashboard/
-    │   │   ├── Topbar.tsx                   # logo, search, "agents online" pulse, avatar
-    │   │   ├── Sidebar.tsx                  # active project card, nav, new run CTA
-    │   │   ├── StatsGrid.tsx                # 4 metric cards, staggered entrance
-    │   │   ├── ProjectMemoryCard.tsx        # collapsible memory entries, type-coded chips
-    │   │   └── SessionsTable.tsx            # run history, verdict badges, click → run view
-    │   │
-    │   └── shared/
-    │       ├── WaitlistModal.tsx            # email capture, used by every landing CTA
-    │       ├── AgentBadge.tsx               # colored agent identity chip (dot + label)
-    │       └── VerdictBadge.tsx             # SHIPPABLE / NEEDS_REVISION / RUNNING pill
-    │
-    └── lib/
-        ├── types.ts                         # Session, MemoryEntry, Project, SSEEvent, etc.
-        └── constants.ts                     # AGENT_CONFIG, PRICING_TIERS, WORKFLOW_STEPS, NAV_LINKS
+└── backend/
+    ├── main.py                          # FastAPI entry point
+    ├── config.py                        # Environment configurations
+    ├── requirements.txt                 # Python dependencies
+    ├── api/                             # FastAPI routers (runs, sessions, projects)
+    ├── agents/                          # Specialized AI agent implementations
+    ├── orchestration/                   # LangGraph orchestration workflows
+    ├── db/                              # Supabase database integrations
+    ├── storage/                         # OSS2 storage implementations
+    └── memory/                          # Project memory management
 ```
 
-## Nothing deleted
-This is a net-new `prismos/` folder. Drop it into your existing Next.js project root — it does not touch or restructure anything already in your codebase. Your backend engineer can treat `src/lib/types.ts` as the frontend's expected shape for SSE events and session data.
+## 🛠️ Tech Stack
 
-## Still to build (next rounds, not assumed)
-- `/run/new` — context input + feature request form (2-step)
-- `/run/[sessionId]` — live agent streaming view (7 panels + conflict log + final package)
-- `/run/[sessionId]/benchmark` — full benchmark detail page
-- `/projects` and `/projects/[projectId]` — project list + memory viewer
-- Real SSE wiring in place of the `console.log` stubs in `dashboard/page.tsx`
+### Frontend
+- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
 
-## Notes
-- No auth required (hackathon build)
-- Anonymous sessions via localStorage `session_token` (not yet wired — add a `useSessionToken` hook when backend is ready)
-- All pricing/hero/final CTAs open the same `WaitlistModal` instance, lifted to page-level state
-- Backend SSE endpoint target: `NEXT_PUBLIC_API_BASE_URL/runs/{id}/stream`
-- `ProductShowcase.tsx` placeholder grid and `SessionsTable.tsx` / `ProjectMemoryCard.tsx` mock arrays are clearly marked — swap for real data/API calls when backend is live
+### Backend
+- **Framework**: [FastAPI](https://fastapi.tiangolo.com/)
+- **AI Orchestration**: [LangGraph](https://langchain-ai.github.io/langgraph/) & [LangChain](https://python.langchain.com/)
+- **Database**: [Supabase](https://supabase.com/)
+- **Storage**: [Alibaba Cloud OSS](https://www.alibabacloud.com/product/oss)
+- **Language**: [Python 3](https://www.python.org/)
+
+## 🔗 Environment Variables
+
+To connect PrismOS to a live backend, ensure you set the API base URL in your `.env.local` file:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=https://api.your-backend.com/api/v1
+```
+
+If not provided, the app will fall back to its internal configuration or mock data where applicable.
+
+## 📜 Notes
+
+- **Hackathon Build**: Authentication is disabled. Anonymous sessions are managed via `localStorage` with `session_token`.
+- **Backend Sync**: Live agent streaming relies on Server-Sent Events (SSE) via the `/runs/{id}/stream` endpoint.

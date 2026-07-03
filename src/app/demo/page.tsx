@@ -158,11 +158,17 @@ export default function DemoPage() {
   useEffect(() => {
     timers.current.forEach(clearTimeout)
     timers.current = []
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStepIndex(0)
+     
     setAgentStates(initialAgentStates())
+     
     setActiveAgent(null)
+     
     setConflicts([])
+     
     setVerdict(null)
+     
     setPackageReady(false)
 
     const schedule = (fn: () => void, delay: number) => {
