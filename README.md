@@ -2,6 +2,19 @@
 
 **PrismOS** is an autonomous AI operating system designed to orchestrate 7 specialized agents to ship features directly into your existing product. Context-aware, conflict-resolving, and production-ready.
 
+## 🏆 Hackathon Submission
+
+PrismOS is our submission for the hackathon, demonstrating a fully autonomous software delivery pipeline powered by multi-agent orchestration. Key features include:
+- **7-Agent Pipeline**: A LangGraph orchestrated workflow where 7 specialized agents (Analyst, PM, Architect, UI/UX, Engineer, QA, Release Manager) collaborate to write and review production code.
+- **Project Memory**: The system natively retains project context, accumulating architectural decisions and constraints into Supabase to inform future agent runs.
+- **Live Streaming**: Leverages Server-Sent Events (SSE) to stream the agents' internal thought processes and outputs to the Next.js frontend in real-time.
+
+## ☁️ Proof of Alibaba Cloud Deployment
+
+To verify our integration with Alibaba Cloud infrastructure and models, please review the following core files in our implementation:
+- **Qwen / DashScope LLM Usage**: Check `backend/agents/base.py` (where our LangChain implementation natively utilizes Alibaba Dashscope models).
+- **Alibaba Cloud OSS Usage**: Check `backend/storage/oss.py` (where the final codebase packages are bundled and stored securely in OSS).
+
 ## 🚀 Getting Started
 
 ### 1. Frontend Setup
@@ -40,6 +53,31 @@ uvicorn main:app --reload --port 8000
 ```
 
 ## 🧠 Architecture & Agents
+
+### System Flow
+
+```mermaid
+graph TD
+    %% Frontend Layer
+    Client[Next.js 14 Frontend]
+    
+    %% Backend Layer
+    API[FastAPI Backend]
+    Orchestrator[LangGraph Orchestration]
+    
+    %% Cloud & Infrastructure
+    DB[(Supabase PostgreSQL)]
+    LLM[Qwen Cloud / DashScope]
+    Storage[Alibaba Cloud OSS]
+
+    %% Connections
+    Client <-->|SSE / REST API| API
+    API -->|Triggers| Orchestrator
+    API <-->|Reads/Writes| DB
+    Orchestrator <-->|Prompting| LLM
+    Orchestrator <-->|Save Packages| Storage
+    Orchestrator <-->|Query Context| DB
+```
 
 PrismOS utilizes a suite of 7 specialized AI agents to take a feature request from concept to shippable code:
 
