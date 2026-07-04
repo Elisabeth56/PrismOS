@@ -25,6 +25,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict
 
 from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
 from agents.architect import ArchitectAgent
 from agents.baseline import BaselineAgent
@@ -347,6 +348,7 @@ async def resolution_node(state: PrismOSState) -> Dict[str, Any]:
             sid,
             c["conflict_id"],
             c["agents_involved"],
+            c["summary"],
             resolution=f"See Release Manager output",
             rationale=output[:200],
         )
@@ -628,7 +630,7 @@ def route_after_conflict_check(state: PrismOSState) -> str:
 # Build the Graph
 # =============================================================================
 
-def build_graph() -> StateGraph:
+def build_graph() -> CompiledStateGraph:
     """Construct and compile the PrismOS LangGraph pipeline."""
     graph = StateGraph(PrismOSState)
 

@@ -86,6 +86,6 @@ export type SSEEvent =
   | { type: 'agent_done'; agent: AgentType; output: string }
   | { type: 'conflict_start'; conflictId: string }
   | { type: 'conflict_token'; conflictId: string; token: string }
-  | { type: 'conflict_done'; conflictId: string; resolution: string; rationale: string }
+  | { type: 'conflict_done'; conflictId: string; agentsInvolved: string[]; summary: string; resolution: string; rationale: string }
   | { type: 'run_complete'; verdict: 'SHIPPABLE' | 'NEEDS_REVISION'; package: Record<string, unknown> }
   | { type: 'run_error'; message: string }

@@ -251,12 +251,14 @@ async def emit_conflict_done(
     session_id: str,
     conflict_id: str,
     agents_involved: List[str],
+    summary: str,
     resolution: str,
     rationale: str,
 ) -> None:
     await event_bus.emit(session_id, "conflict_done", {
         "conflictId": conflict_id,
-        "agents": agents_involved,
+        "agentsInvolved": agents_involved,
+        "summary": summary,
         "resolution": resolution,
         "rationale": rationale,
     })

@@ -169,8 +169,8 @@ export default function RunViewPage() {
             ...prev,
             {
               id: event.conflictId,
-              agentsInvolved: [], // Will be filled from resolution context
-              summary: '',
+              agentsInvolved: event.agentsInvolved || [],
+              summary: event.summary || '',
               resolution: event.resolution,
               rationale: event.rationale,
             },

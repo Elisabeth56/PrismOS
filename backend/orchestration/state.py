@@ -8,9 +8,7 @@ partial dicts to update specific fields.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
-
-from typing_extensions import TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 
 class PrismOSState(TypedDict, total=False):

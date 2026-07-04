@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional
 from db import queries
 from db.models import MemoryEntryRow
 from db.supabase import get_supabase
+from orchestration.state import PrismOSState
 from orchestration.streaming import emit_memory_write_done
 
 logger = logging.getLogger("prismos.memory.writer")
@@ -32,7 +33,7 @@ logger = logging.getLogger("prismos.memory.writer")
 async def write_memory(
     session_id: str,
     project_id: str,
-    state: Dict[str, Any],
+    state: PrismOSState,
 ) -> int:
     """
     Extract and persist memory entries from a completed run.
