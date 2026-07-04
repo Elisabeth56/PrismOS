@@ -415,7 +415,7 @@ class CreateProjectRequest(BaseModel):
 
 class CreateProjectResponse(BaseModel):
     """POST /api/v1/projects → 201"""
-    project_id: str
+    id: str
     name: str
     created_at: str
 

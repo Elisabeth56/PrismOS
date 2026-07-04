@@ -50,7 +50,7 @@ async def create_project(
         raise HTTPException(status_code=500, detail="Failed to create project")
 
     return CreateProjectResponse(
-        project_id=created["id"],
+        id=created["id"],
         name=created["name"],
         created_at=created["created_at"],
     )
