@@ -1,0 +1,33 @@
+<!-- PLACE AT: src/app/icon.svg -->
+<!-- Next.js App Router auto-detects this filename and generates the favicon <link> tags —
+     no code changes or metadata config needed. It replaces favicon.ico automatically,
+     but see the note below about deleting the old file too. -->
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="prismShape">
+      <path d="M50 6
+        C52 6 54 7 55 9
+        L88 68
+        C90 71 90 75 88 78
+        C86 81 83 83 79 83
+        L21 83
+        C17 83 14 81 12 78
+        C10 75 10 71 12 68
+        L45 9
+        C46 7 48 6 50 6
+        Z" />
+    </clipPath>
+    <linearGradient id="facetLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <linearGradient id="facetRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+  </defs>
+  <g clip-path="url(#prismShape)">
+    <polygon points="0,0 50,0 50,100 0,100" fill="url(#facetLeft)" />
+    <polygon points="50,0 100,0 100,100 50,100" fill="url(#facetRight)" />
+  </g>
+</svg>
