@@ -38,7 +38,7 @@ def _extract_markers(
     Extract conflict markers from an agent's output.
 
     Returns list of { marker, agent, context } dicts.
-    Context is the text after the marker on the same line + next line.
+    Context is the text after the marker, looking ahead up to 3 non-empty lines.
     """
     findings = []
     lines = output.split("\n")
@@ -46,14 +46,25 @@ def _extract_markers(
     for i, line in enumerate(lines):
         for marker in ALL_MARKERS:
             if marker in line:
-                # Grab context: rest of this line + next line
+                # Grab context: rest of this line
                 context = line.split(marker, 1)[1].strip()
-                if i + 1 < len(lines):
-                    context += " " + lines[i + 1].strip()
+                
+                # Look ahead for up to 3 non-empty lines to get actual context
+                lookahead_lines = []
+                j = i + 1
+                while j < len(lines) and len(lookahead_lines) < 3:
+                    next_line = lines[j].strip()
+                    if next_line:
+                        lookahead_lines.append(next_line)
+                    j += 1
+                
+                if lookahead_lines:
+                    context += (" " if context else "") + " ".join(lookahead_lines)
+                
                 findings.append({
                     "marker": marker,
                     "agent": agent_name,
-                    "context": context[:300],  # cap length
+                    "context": context[:300].strip(),  # cap length
                 })
     return findings
 
