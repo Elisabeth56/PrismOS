@@ -54,7 +54,7 @@ export default function ConflictLogPanel({ conflicts }: ConflictLogPanelProps) {
             <div className="text-[10px] font-bold uppercase tracking-wide text-amber-400 mb-1.5">
               {c.agentsInvolved.join(' ↔ ')}
             </div>
-            <p className="text-[12px] text-white/55 leading-relaxed mb-2">{c.summary}</p>
+            <p className="text-[12px] text-white/55 leading-relaxed mb-2 whitespace-pre-wrap">{c.summary}</p>
             <div className="text-[11px] text-white font-medium bg-white/[0.04] rounded-lg px-3 py-2 leading-relaxed">
               → {c.resolution}
             </div>

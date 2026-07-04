@@ -102,7 +102,7 @@ def detect_conflicts(
                 "conflict_id": f"c-{uuid.uuid4().hex[:8]}",
                 "agents_involved": agents_involved,
                 "marker": finding["marker"],
-                "summary": f"{finding['agent']} flagged {finding['marker']} {finding['context'][:100]}",
+                "summary": f"{finding['agent']} flagged {finding['marker']}\n\nContext:\n{finding['context']}",
                 "source_agent": finding["agent"],
                 "context": finding["context"],
             })
@@ -126,7 +126,7 @@ def detect_conflicts(
                     if f["marker"] == "DISAGREES:" and f["agent"] != finding["agent"]
                 ],
                 "marker": finding["marker"],
-                "summary": f"{finding['agent']} flagged {finding['marker']} and another agent disagrees",
+                "summary": f"{finding['agent']} flagged {finding['marker']} and another agent disagrees\n\nContext:\n{finding['context']}",
                 "source_agent": finding["agent"],
                 "context": finding["context"],
             })

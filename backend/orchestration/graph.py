@@ -284,7 +284,7 @@ async def conflict_check_node(state: PrismOSState) -> Dict[str, Any]:
                         session_id=sid,
                         conflict_id=f"warn-{w['agent']}",
                         agents_involved=[w["agent"]],
-                        summary=f"[WARNING] {w['marker']} {w['context'][:200]}",
+                        summary=f"[WARNING] {w['marker']}\n\nContext:\n{w['context']}",
                         resolution="No resolution required — warning only",
                         rationale=f"{w['marker']} from {w['agent']} alone does not trigger resolution",
                     ),
