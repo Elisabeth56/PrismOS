@@ -341,16 +341,36 @@ async def resolution_node(state: PrismOSState) -> Dict[str, Any]:
     callback = make_stream_callback(sid, "release_manager")
     output = await release_manager_agent.run(context, callback)
 
+    # Parse output to extract better summary, resolution, and rationale
+    import re
+    blocks = re.split(r'### Conflict \d+:', output)[1:]
+    parsed_conflicts = []
+    for block in blocks:
+        summary_match = re.search(r'\*\*Summary:\*\*\s*(.*?)(?=\*\*|$)', block, re.DOTALL)
+        decision_match = re.search(r'\*\*Decision:\*\*\s*(.*?)(?=\*\*|$)', block, re.DOTALL)
+        rationale_match = re.search(r'\*\*Rationale:\*\*\s*(.*?)(?=\*\*|$)', block, re.DOTALL)
+        
+        parsed_conflicts.append({
+            "summary": summary_match.group(1).strip() if summary_match else None,
+            "resolution": decision_match.group(1).strip() if decision_match else None,
+            "rationale": rationale_match.group(1).strip() if rationale_match else None,
+        })
+
     # Emit conflict SSE events
-    for c in conflicts:
+    for i, c in enumerate(conflicts):
+        parsed = parsed_conflicts[i] if i < len(parsed_conflicts) else {}
+        summary = parsed.get("summary") or c["summary"]
+        resolution = parsed.get("resolution") or "See Release Manager output"
+        rationale = parsed.get("rationale") or output[:200]
+
         await emit_conflict_start(sid, c["conflict_id"])
         await emit_conflict_done(
             sid,
             c["conflict_id"],
             c["agents_involved"],
-            c["summary"],
-            resolution=f"See Release Manager output",
-            rationale=output[:200],
+            summary,
+            resolution=resolution,
+            rationale=rationale,
         )
 
     await emit_agent_done(sid, "release_manager", output)
@@ -358,7 +378,12 @@ async def resolution_node(state: PrismOSState) -> Dict[str, Any]:
 
     # Save conflict logs to DB
     db = get_supabase()
-    for c in conflicts:
+    for i, c in enumerate(conflicts):
+        parsed = parsed_conflicts[i] if i < len(parsed_conflicts) else {}
+        summary = parsed.get("summary") or c["summary"]
+        resolution = parsed.get("resolution") or output[:500]
+        rationale = parsed.get("rationale") or output[:500]
+
         try:
             await queries.create_conflict_log(
                 db,
@@ -366,9 +391,9 @@ async def resolution_node(state: PrismOSState) -> Dict[str, Any]:
                     session_id=sid,
                     conflict_id=c["conflict_id"],
                     agents_involved=c["agents_involved"],
-                    summary=c["summary"],
-                    resolution=output[:500],
-                    rationale=output[:500],
+                    summary=summary,
+                    resolution=resolution,
+                    rationale=rationale,
                 ),
             )
         except Exception as e:

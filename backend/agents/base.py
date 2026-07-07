@@ -15,6 +15,7 @@ import logging
 from typing import Any, Callable, Dict, List, Optional
 
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 
 from config import get_settings
 
@@ -85,7 +86,7 @@ class BaseAgent:
 
         return "\n\n---\n\n".join(blocks)
 
-    def build_messages(self, context: Dict[str, Any]) -> List[Dict[str, str]]:
+    def build_messages(self, context: Dict[str, Any]) -> List[ChatCompletionMessageParam]:
         """
         Build the messages array for the Qwen API call.
 
@@ -93,7 +94,7 @@ class BaseAgent:
         User messages: prior agent outputs (if any) + task
         """
         system = self.build_system_prompt(context)
-        messages: List[Dict[str, str]] = [
+        messages: List[ChatCompletionMessageParam] = [
             {"role": "system", "content": system}
         ]
 
