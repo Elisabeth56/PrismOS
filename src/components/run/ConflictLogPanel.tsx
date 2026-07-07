@@ -47,7 +47,7 @@ export default function ConflictLogPanel({ conflicts }: ConflictLogPanelProps) {
             initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4, delay: i * 0.1 }}
-            className="relative rounded-xl p-3.5 overflow-hidden"
+            className="relative shrink-0 rounded-xl p-3.5 overflow-hidden"
             style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
           >
             <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-amber-500 rounded-l" />

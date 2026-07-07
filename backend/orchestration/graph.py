@@ -346,9 +346,9 @@ async def resolution_node(state: PrismOSState) -> Dict[str, Any]:
     blocks = re.split(r'### Conflict \d+:', output)[1:]
     parsed_conflicts = []
     for block in blocks:
-        summary_match = re.search(r'\*\*Summary:\*\*\s*(.*?)(?=\*\*|$)', block, re.DOTALL)
-        decision_match = re.search(r'\*\*Decision:\*\*\s*(.*?)(?=\*\*|$)', block, re.DOTALL)
-        rationale_match = re.search(r'\*\*Rationale:\*\*\s*(.*?)(?=\*\*|$)', block, re.DOTALL)
+        summary_match = re.search(r'\*\*Summary:\*\*(.*?)(?=\n\*\*|$)', block, re.DOTALL)
+        decision_match = re.search(r'\*\*Decision:\*\*(.*?)(?=\n\*\*|$)', block, re.DOTALL)
+        rationale_match = re.search(r'\*\*Rationale:\*\*(.*?)(?=\n\*\*|$)', block, re.DOTALL)
         
         parsed_conflicts.append({
             "summary": summary_match.group(1).strip() if summary_match else None,
