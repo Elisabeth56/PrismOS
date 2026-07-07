@@ -46,7 +46,11 @@ async function request<T>(
       headers['X-Session-Token'] = token
     }
 
-    const res = await fetch(`${API_BASE}${path}`, {
+    const timestamp = new Date().getTime()
+    const separator = path.includes('?') ? '&' : '?'
+    const finalUrl = `${API_BASE}${path}${separator}_t=${timestamp}`
+
+    const res = await fetch(finalUrl, {
       headers,
       cache: 'no-store',
       ...init,
