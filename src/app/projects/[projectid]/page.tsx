@@ -2,11 +2,11 @@
 // src/app/projects/[projectId]/page.tsx
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import VerdictBadge from '@/components/shared/VerdictBadge'
-import { getProjectMemory, getSessions, getProjects } from '@/lib/api'
+import { getProjectMemory, getSessions, getProjects, deleteSession } from '@/lib/api'
 import { Verdict } from '@/lib/types'
 
 type EntryType = 'architecture_decision' | 'shipped_feature' | 'conflict_resolution' | 'ux_decision' | 'known_constraint'
@@ -66,6 +66,7 @@ function formatDuration(seconds: number): string {
 
 export default function ProjectDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const projectId = params?.projectid as string | undefined
 
   const [filter, setFilter] = useState<FilterType>('all')
@@ -108,7 +109,7 @@ export default function ProjectDetailPage() {
       }
 
       // Fetch sessions to build run history
-      const sessResult = await getSessions()
+      const sessResult = await getSessions(projectId)
       if (sessResult.ok) {
         // The sessions endpoint doesn't filter by project, so we show all
         const mappedRuns: RunDisplay[] = sessResult.data.sessions.map((s) => ({
@@ -137,6 +138,16 @@ export default function ProjectDetailPage() {
 
     fetchData()
   }, [projectId])
+
+  const handleDeleteSession = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!window.confirm("Are you sure you want to delete this run?")) return
+    const res = await deleteSession(id)
+    if (res.ok) {
+      setRuns(prev => prev.filter(r => r.id !== id))
+    }
+  }
 
   const filtered = filter === 'all' ? memoryEntries : memoryEntries.filter((e) => e.type === filter)
   const filterOptions: { value: FilterType; label: string }[] = [
@@ -280,15 +291,20 @@ export default function ProjectDetailPage() {
                   <div className="text-center py-10 text-[13px] text-white/25">No runs yet.</div>
                 )}
                 {runs.map((run, i) => (
-                  <motion.a key={run.id} href={`/run/${run.id}`}
+                  <motion.div key={run.id} onClick={() => router.push(`/run/${run.id}`)}
                     initial={{ opacity: 0, x: 12 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4, delay: i * 0.06 }}
-                    className="block rounded-xl p-4 hover:border-white/[0.14] transition-all duration-200 group"
+                    className="block relative rounded-xl p-4 hover:border-white/[0.14] transition-all duration-200 group cursor-pointer"
                     style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}
                   >
+                    <div className="absolute top-2.5 right-2.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={(e) => handleDeleteSession(e, run.id)} className="text-white/20 hover:text-red-400 p-1.5 transition-colors rounded-md hover:bg-red-400/10">
+                        <span className="text-[12px]">🗑</span>
+                      </button>
+                    </div>
                     <div className="flex items-start justify-between gap-2 mb-2.5">
-                      <p className="text-[12px] text-white font-medium line-clamp-2 flex-1">&quot;{run.request}&quot;</p>
+                      <p className="text-[12px] text-white font-medium line-clamp-2 flex-1 pr-6">&quot;{run.request}&quot;</p>
                       <span className="text-white/25 text-[11px] group-hover:text-white/50 transition-colors flex-shrink-0">→</span>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
@@ -296,7 +312,7 @@ export default function ProjectDetailPage() {
                       <span className="text-[10px] text-white/30">{run.conflicts} conflicts</span>
                       <span className="text-[10px] text-white/25 ml-auto">{run.date}</span>
                     </div>
-                  </motion.a>
+                  </motion.div>
                 ))}
               </div>
             </div>

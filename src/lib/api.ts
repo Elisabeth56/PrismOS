@@ -48,6 +48,7 @@ async function request<T>(
 
     const res = await fetch(`${API_BASE}${path}`, {
       headers,
+      cache: 'no-store',
       ...init,
     })
     if (!res.ok) {
@@ -112,6 +113,12 @@ export async function updateProject(
   })
 }
 
+export async function deleteProject(projectId: string): Promise<ApiResult<{ success: boolean }>> {
+  return request<{ success: boolean }>(`/projects/${projectId}`, {
+    method: 'DELETE',
+  })
+}
+
 // ---------------------------------------------------------------------------
 // POST /api/v1/projects — Create a new project
 // ---------------------------------------------------------------------------
@@ -166,8 +173,15 @@ export interface SessionListResponse {
   sessions: Session[]
 }
 
-export async function getSessions(): Promise<ApiResult<SessionListResponse>> {
-  return request<SessionListResponse>('/sessions')
+export async function getSessions(projectId?: string): Promise<ApiResult<SessionListResponse>> {
+  const url = projectId ? `/sessions?project_id=${projectId}` : '/sessions'
+  return request<SessionListResponse>(url)
+}
+
+export async function deleteSession(sessionId: string): Promise<ApiResult<{ success: boolean }>> {
+  return request<{ success: boolean }>(`/sessions/${sessionId}`, {
+    method: 'DELETE',
+  })
 }
 
 // ---------------------------------------------------------------------------

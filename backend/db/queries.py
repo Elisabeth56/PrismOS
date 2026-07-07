@@ -49,16 +49,23 @@ async def get_session(db: Client, session_id: str) -> Optional[Dict[str, Any]]:
     )
     return result.data
 
+async def delete_session(db: Client, session_id: str) -> bool:
+    """Delete a session."""
+    result = db.table("sessions").delete().eq("id", session_id).execute()
+    return True
 
 async def list_sessions(
     db: Client,
     session_token: Optional[str] = None,
+    project_id: Optional[str] = None,
     limit: int = 50,
 ) -> List[Dict[str, Any]]:
-    """List sessions, optionally filtered by anonymous session token."""
+    """List sessions, optionally filtered by anonymous session token and project_id."""
     query = db.table("sessions").select("*").order("created_at", desc=True).limit(limit)
     if session_token:
         query = query.eq("session_token", session_token)
+    if project_id:
+        query = query.eq("project_id", project_id)
     result = query.execute()
     return result.data or []
 

@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { createProject, getProjects } from '@/lib/api'
+import { createProject, getProjects, deleteProject } from '@/lib/api'
 
 interface Project {
   id: string
@@ -88,6 +88,15 @@ export default function ProjectsPage() {
     }
   }
 
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    if (!window.confirm("Are you sure you want to delete this project? All associated runs and memory will be lost.")) return
+    const res = await deleteProject(id)
+    if (res.ok) {
+      setProjects(prev => prev.filter(p => p.id !== id))
+    }
+  }
+
   return (
     <div className="relative min-h-screen bg-black">
       {/* Ambient bg */}
@@ -127,18 +136,24 @@ export default function ProjectsPage() {
         {!loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((project, i) => (
-              <motion.button
+              <motion.div
                 key={project.id}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }}
                 onClick={() => router.push(`/projects/${project.id}`)}
-                className="text-left rounded-2xl p-6 border border-white/[0.07] hover:border-white/[0.14] transition-all duration-300 group overflow-hidden relative"
+                className="text-left rounded-2xl p-6 border border-white/[0.07] hover:border-white/[0.14] transition-all duration-300 group overflow-hidden relative cursor-pointer"
                 style={{ background: 'rgba(255,255,255,0.025)' }}
               >
                 {/* Hover glow */}
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                   style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.06) 0%, transparent 70%)' }} />
+
+                <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={(e) => handleDelete(e, project.id)} className="text-white/20 hover:text-red-400 p-1.5 transition-colors rounded-md hover:bg-red-400/10">
+                    <span className="text-[13px]">🗑</span>
+                  </button>
+                </div>
 
                 {/* Project avatar */}
                 <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${GRADIENT_COLORS[i % GRADIENT_COLORS.length]} flex items-center justify-center text-[14px] font-bold text-black mb-4`}>
@@ -170,7 +185,7 @@ export default function ProjectsPage() {
                   <span className="text-[11px] text-white/30">Last run {project.last_run_at}</span>
                   <span className="text-white/25 text-[12px] group-hover:text-white/60 transition-colors">→</span>
                 </div>
-              </motion.button>
+              </motion.div>
             ))}
 
             {/* Empty state card */}

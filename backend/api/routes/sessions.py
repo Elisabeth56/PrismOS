@@ -27,14 +27,23 @@ router = APIRouter()
 
 @router.get("/sessions", response_model=SessionListResponse)
 async def list_sessions(
+    project_id: Optional[str] = None,
     db=Depends(get_db),
     session_token: Optional[str] = Depends(get_session_token),
 ):
     """
     List past sessions, filtered by the anonymous X-Session-Token header
-    so each browser only sees its own history.
+    so each browser only sees its own history, and optionally filtered by project_id.
     """
-    rows = await queries.list_sessions(db, session_token=session_token)
+    rows = await queries.list_sessions(db, session_token=session_token, project_id=project_id)
+
+    session_ids = [r["id"] for r in rows]
+    conflict_counts = {}
+    if session_ids:
+        conflicts = db.table("conflict_logs").select("session_id").in_("session_id", session_ids).execute().data
+        for c in (conflicts or []):
+            sid = c["session_id"]
+            conflict_counts[sid] = conflict_counts.get(sid, 0) + 1
 
     sessions = []
     for r in rows:
@@ -59,7 +68,7 @@ async def list_sessions(
                 created_at=created_at,
                 step_completed=r.get("step_completed", 0),
                 context_provided=r.get("context_provided", False),
-                conflicts_resolved=0,
+                conflicts_resolved=conflict_counts.get(r["id"], 0),
                 run_duration_seconds=duration,
             )
         )
@@ -169,3 +178,12 @@ async def get_session_detail(
         final_package=outputs_by_agent.get("release_manager"),
         benchmark=benchmark,
     )
+
+@router.delete("/{session_id}")
+async def delete_session(
+    session_id: str,
+    db=Depends(get_db),
+):
+    """Delete a session."""
+    success = await queries.delete_session(db, session_id)
+    return {"success": success}

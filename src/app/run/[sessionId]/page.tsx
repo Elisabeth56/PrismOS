@@ -47,8 +47,16 @@ export default function RunViewPage() {
 
   // Determine agent step index (1-based, matching STEP_LABELS)
   const agentToStep = useCallback((agent: AgentType): number => {
-    const idx = AGENT_ORDER.indexOf(agent)
-    return idx >= 0 ? idx + 1 : 0
+    switch (agent) {
+      case 'context_analyst': return 1
+      case 'pm': return 3
+      case 'architect': return 4
+      case 'uiux_designer': return 6
+      case 'engineer': return 7
+      case 'qa': return 8
+      case 'release_manager': return 5
+      default: return 0
+    }
   }, [])
 
   // Handle each SSE event
