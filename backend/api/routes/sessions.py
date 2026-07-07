@@ -179,11 +179,15 @@ async def get_session_detail(
         benchmark=benchmark,
     )
 
-@router.delete("/{session_id}")
+@router.delete("/sessions/{session_id}")
 async def delete_session(
     session_id: str,
     db=Depends(get_db),
 ):
     """Delete a session."""
-    success = await queries.delete_session(db, session_id)
-    return {"success": success}
+    try:
+        success = await queries.delete_session(db, session_id)
+        return {"success": success}
+    except Exception as e:
+        logger.error("Failed to delete session: %s", e)
+        raise HTTPException(status_code=400, detail=str(e))

@@ -146,6 +146,8 @@ export default function ProjectDetailPage() {
     const res = await deleteSession(id)
     if (res.ok) {
       setRuns(prev => prev.filter(r => r.id !== id))
+    } else {
+      alert(`Failed to delete run: ${res.error || 'Unknown error'}`)
     }
   }
 

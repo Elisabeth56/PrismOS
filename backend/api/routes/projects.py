@@ -146,11 +146,15 @@ async def get_project_memory(
         entries=entries,
     )
 
-@router.delete("/{project_id}")
+@router.delete("/projects/{project_id}")
 async def delete_project(
     project_id: str,
     db=Depends(get_db),
 ):
     """Delete a project."""
-    success = await queries.delete_project(db, project_id)
-    return {"success": success}
+    try:
+        success = await queries.delete_project(db, project_id)
+        return {"success": success}
+    except Exception as e:
+        logger.error("Failed to delete project: %s", e)
+        raise HTTPException(status_code=400, detail=str(e))

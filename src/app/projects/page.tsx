@@ -94,6 +94,8 @@ export default function ProjectsPage() {
     const res = await deleteProject(id)
     if (res.ok) {
       setProjects(prev => prev.filter(p => p.id !== id))
+    } else {
+      alert(`Failed to delete project: ${res.error || 'Unknown error'}`)
     }
   }
 
