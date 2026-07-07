@@ -269,6 +269,12 @@ async def update_project(
     return result.data[0] if result.data else {}
 
 
+async def delete_project(db: Client, project_id: str) -> bool:
+    """Delete a project."""
+    result = db.table("projects").delete().eq("id", project_id).execute()
+    return True
+
+
 # =============================================================================
 # Memory Entries
 # =============================================================================
