@@ -34,7 +34,7 @@ def _get_client() -> AsyncOpenAI:
             api_key=settings.QWEN_API_KEY,
             base_url=settings.QWEN_API_BASE,
         )
-        logger.info("Qwen client initialised: model=%s", settings.QWEN_MODEL)
+        logger.info("Qwen client initialised")
     return _client
 
 
@@ -52,6 +52,7 @@ class BaseAgent:
 
     name: str = "base"
     system_prompt: str = "You are a helpful assistant."
+    model_type: str = "reasoning"  # "reasoning" | "coder"
 
     # ── Context Assembly ─────────────────────────────────────────────────
 
@@ -144,14 +145,17 @@ class BaseAgent:
         client = _get_client()
         messages = self.build_messages(context)
 
+        # Pick model based on agent type
+        target_model = settings.QWEN_CODER_MODEL if self.model_type == "coder" else settings.QWEN_REASONING_MODEL
+
         logger.info("Agent '%s' starting — %d messages, model=%s",
-                     self.name, len(messages), settings.QWEN_MODEL)
+                     self.name, len(messages), target_model)
 
         full_output = ""
 
         try:
             stream = await client.chat.completions.create(
-                model=settings.QWEN_MODEL,
+                model=target_model,
                 messages=messages,
                 stream=True,
                 temperature=0.7,
