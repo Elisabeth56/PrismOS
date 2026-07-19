@@ -29,8 +29,13 @@ export default function NewRunPage() {
       context_inputs: context,
     })
 
-    // Use the real session id from the API, or fall back to a local mock
-    const sessionId = result.ok ? result.data.session_id : `run-${Date.now()}`
+    // Use the real session id from the API
+    if (!result.ok) {
+      alert(`Failed to start run: ${result.error}`)
+      setSubmitting(false)
+      return
+    }
+    const sessionId = result.data.session_id
     router.push(`/run/${sessionId}?request=${encodeURIComponent(featureRequest)}&class=${classification}`)
   }
 
