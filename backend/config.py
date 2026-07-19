@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     QWEN_API_KEY: str = ""
     QWEN_API_BASE: str = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
     QWEN_REASONING_MODEL: str = "qwen3.7-plus"
-    QWEN_CODER_MODEL: str = "qwen3-coder"
+    QWEN_CODER_MODEL: str = "qwen3.7-plus"
 
     # ── Supabase ─────────────────────────────────────────────────────────
     SUPABASE_URL: str = ""
