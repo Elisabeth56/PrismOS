@@ -5,6 +5,16 @@ import { useState, useEffect } from 'react'
 
 const STORAGE_KEY = 'session_token'
 
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  })
+}
+
 /**
  * Generates or retrieves an anonymous session token from localStorage.
  * Used to tie browser sessions to backend data (X-Session-Token header).
@@ -17,7 +27,7 @@ export function useSessionToken(): string {
   useEffect(() => {
     let existing = localStorage.getItem(STORAGE_KEY)
     if (!existing) {
-      existing = crypto.randomUUID()
+      existing = generateUUID()
       localStorage.setItem(STORAGE_KEY, existing)
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -36,7 +46,7 @@ export function getSessionToken(): string | null {
   if (typeof window === 'undefined') return null
   let token = localStorage.getItem(STORAGE_KEY)
   if (!token) {
-    token = crypto.randomUUID()
+    token = generateUUID()
     localStorage.setItem(STORAGE_KEY, token)
   }
   return token
