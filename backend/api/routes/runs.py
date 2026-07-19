@@ -12,7 +12,7 @@ import logging
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from api.deps import get_db, get_session_token
@@ -127,7 +127,7 @@ async def create_run(
 
 
 @router.get("/runs/{session_id}/stream")
-async def stream_run(session_id: str, db=Depends(get_db)):
+async def stream_run(request: Request, session_id: str, db=Depends(get_db)):
     """
     SSE stream endpoint. Frontend connects with EventSource.
 
@@ -163,12 +163,18 @@ async def stream_run(session_id: str, db=Depends(get_db)):
         finally:
             event_bus.unsubscribe(session_id, queue)
 
+    headers = {
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+    }
+    origin = request.headers.get("origin")
+    if origin and (origin in settings.cors_origins_list or "*" in settings.cors_origins_list):
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
+        headers=headers,
     )
