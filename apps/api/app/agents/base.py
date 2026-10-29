@@ -1,13 +1,4 @@
-# backend/agents/base.py
-"""
-BaseAgent — foundation for all PrismOS agents.
-
-Handles:
-  - Qwen Cloud API connection (OpenAI-compatible via Dashscope)
-  - System prompt assembly with context injection
-  - Streaming token emission via callback
-  - Error handling and output collection
-"""
+"""BaseAgent for the pre-remodel pipeline: prompt assembly and streamed output. Replaced by the graph rewrite in #13."""
 
 from __future__ import annotations
 
@@ -15,29 +6,10 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from openai import AsyncOpenAI
-from openai.types.chat import ChatCompletionMessageParam
-
-from app.config import get_settings
+from app.ai import llm
+from app.ai.llm import Message
 
 logger = logging.getLogger("prismos.agents")
-
-# Lazy-initialised shared client
-_client: AsyncOpenAI | None = None
-
-
-def _get_client() -> AsyncOpenAI:
-    """Return a shared AsyncOpenAI client pointed at Qwen Cloud."""
-    global _client
-    if _client is None:
-        settings = get_settings()
-        _client = AsyncOpenAI(
-            api_key=settings.QWEN_API_KEY.get_secret_value(),
-            base_url=str(settings.QWEN_API_BASE),
-        )
-        logger.info("Qwen client initialised")
-    return _client
-
 
 class BaseAgent:
     """
@@ -53,7 +25,6 @@ class BaseAgent:
 
     name: str = "base"
     system_prompt: str = "You are a helpful assistant."
-    model_type: str = "reasoning"  # "reasoning" | "coder"
 
     # ── Context Assembly ─────────────────────────────────────────────────
 
@@ -88,7 +59,7 @@ class BaseAgent:
 
         return "\n\n---\n\n".join(blocks)
 
-    def build_messages(self, context: dict[str, Any]) -> list[ChatCompletionMessageParam]:
+    def build_messages(self, context: dict[str, Any]) -> list[Message]:
         """
         Build the messages array for the Qwen API call.
 
@@ -96,7 +67,7 @@ class BaseAgent:
         User messages: prior agent outputs (if any) + task
         """
         system = self.build_system_prompt(context)
-        messages: list[ChatCompletionMessageParam] = [
+        messages: list[Message] = [
             {"role": "system", "content": system}
         ]
 
@@ -127,58 +98,16 @@ class BaseAgent:
         context: dict[str, Any],
         stream_callback: Callable[[str], Any],
     ) -> str:
-        """
-        Execute the agent:
-          1. Build messages from context
-          2. Call Qwen API with streaming
-          3. Emit tokens via stream_callback
-          4. Return full output string
+        """Streams the agent's answer token by token through stream_callback and returns the full text.
 
-        Args:
-            context: Dict with keys like 'task', 'product_context',
-                     'project_memory', 'prior_outputs'
-            stream_callback: async callable — called with each token string
-
-        Returns:
-            The complete output string
+        Failures propagate so the run stops; an error message is never passed on as an agent's output.
         """
-        settings = get_settings()
-        client = _get_client()
         messages = self.build_messages(context)
-
-        # Pick model based on agent type
-        target_model = settings.QWEN_CODER_MODEL if self.model_type == "coder" else settings.QWEN_REASONING_MODEL
-
-        logger.info("Agent '%s' starting — %d messages, model=%s",
-                     self.name, len(messages), target_model)
-
-        full_output = ""
-
-        try:
-            stream = await client.chat.completions.create(
-                model=target_model,
-                messages=messages,
-                stream=True,
-                temperature=0.7,
-                max_tokens=4096,
-            )
-
-            async for chunk in stream:
-                if not chunk.choices:
-                    continue
-                delta = chunk.choices[0].delta
-                if delta.content:
-                    token = delta.content
-                    full_output += token
-                    await stream_callback(token)
-
-        except Exception as e:
-            error_msg = f"[AGENT ERROR: {self.name}] {type(e).__name__}: {e}"
-            logger.error(error_msg)
-            if not full_output:
-                full_output = error_msg
-            await stream_callback(f"\n\n{error_msg}")
-
-        logger.info("Agent '%s' done — %d chars output",
-                     self.name, len(full_output))
-        return full_output
+        logger.info("Agent '%s' starting with %d messages", self.name, len(messages))
+        parts: list[str] = []
+        async for token in llm.stream_text(messages):
+            parts.append(token)
+            await stream_callback(token)
+        output = "".join(parts)
+        logger.info("Agent '%s' done, %d chars", self.name, len(output))
+        return output
