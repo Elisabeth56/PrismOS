@@ -1,0 +1,1 @@
+What the person using the product experiences: error and empty states, wording of messages, loading and slow-network behaviour, accessibility, and whether the behaviour matches what users would expect. For backend-only changes, review the responses and messages clients will show.
