@@ -47,7 +47,9 @@ def db() -> Iterator[psycopg.Connection]:
             admin.execute(sql.SQL("drop database if exists {} with (force)").format(name))
 
 
-def as_user(conn: psycopg.Connection, user_id: str | None, query: LiteralString | sql.Composed, params: tuple = ()) -> list[tuple]:
+def as_user(
+    conn: psycopg.Connection, user_id: str | None, query: LiteralString | sql.Composed, params: tuple = ()
+) -> list[tuple]:
     """Runs one query the way PostgREST would for a signed-in user (or anon when user_id is None)."""
     with conn.transaction(force_rollback=True), conn.cursor() as cur:
         if user_id is None:
