@@ -16,7 +16,7 @@ from app.errors import register_error_handlers
 from app.features.github.router import router as github_router
 from app.features.projects.router import router as projects_router
 from app.features.runs.router import router as runs_router
-from app.github.app import GitHubApp
+from app.github.app import get_github_app
 from app.github.repo import GitHubRepo, static_token
 from app.pipeline.graph import build_pipeline
 from app.worker import Worker
@@ -26,17 +26,10 @@ logging.basicConfig(level=settings.LOG_LEVEL, format="%(asctime)s | %(levelname)
 logger = logging.getLogger("prismos")
 
 
-github_app = (
-    GitHubApp(settings.GITHUB_APP_ID, settings.GITHUB_APP_PRIVATE_KEY.get_secret_value().replace("\\n", "\n"))
-    if settings.GITHUB_APP_ID and settings.GITHUB_APP_PRIVATE_KEY
-    else None
-)
-
-
 def repo_for(project: dict) -> GitHubRepo:
     """Installation token when the project is attached through the App; otherwise public access."""
     repo, installation = project["repo_full_name"], project["github_installation_id"]
-    if (gh := github_app) and installation:
+    if (gh := get_github_app()) and installation:
 
         async def token() -> str | None:
             return await gh.installation_token(installation, repo)

@@ -13,11 +13,13 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
+from functools import lru_cache
 
 import httpx
 import jwt
 from pydantic import BaseModel
 
+from app.config import get_settings
 from app.errors import AppError
 
 API = "https://api.github.com"
@@ -100,3 +102,13 @@ async def _get(http: httpx.AsyncClient, path: str, params: dict[str, str]) -> di
         )
     response.raise_for_status()
     return response.json()
+
+
+@lru_cache
+def get_github_app() -> GitHubApp | None:
+    """The configured App, or None when GITHUB_APP_ID / GITHUB_APP_PRIVATE_KEY aren't set."""
+    settings = get_settings()
+    if not (settings.GITHUB_APP_ID and settings.GITHUB_APP_PRIVATE_KEY):
+        return None
+    # the key usually arrives as one env line with \n escapes
+    return GitHubApp(settings.GITHUB_APP_ID, settings.GITHUB_APP_PRIVATE_KEY.get_secret_value().replace("\\n", "\n"))
