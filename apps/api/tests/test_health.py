@@ -10,10 +10,11 @@ def test_health_returns_ok():
     assert response.json()["status"] == "ok"
 
 
-def test_existing_endpoints_are_registered():
+def test_endpoints_are_registered():
     paths = TestClient(app).get("/openapi.json").json()["paths"]
 
-    assert "/api/v1/runs" in paths
-    assert "/api/v1/runs/{session_id}/stream" in paths
-    assert "/api/v1/sessions" in paths
     assert "/api/v1/projects" in paths
+    assert "/api/v1/runs" in paths
+    assert "/api/v1/runs/{run_id}" in paths
+    assert "/api/v1/runs/{run_id}/cancel" in paths
+    assert "/api/v1/projects/{project_id}/runs" in paths

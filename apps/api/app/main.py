@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -9,11 +10,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import benchmark, runs, sessions
 from app.config import get_settings
 from app.database import create_pool
 from app.errors import register_error_handlers
 from app.features.projects.router import router as projects_router
+from app.features.runs.router import router as runs_router
+from app.worker import Worker, pipeline_unavailable
 
 settings = get_settings()
 logging.basicConfig(level=settings.LOG_LEVEL, format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s")
@@ -25,8 +27,24 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # the pool opens lazily so /health answers even while the database is unreachable
     app.state.pool = create_pool(settings.DATABASE_URL.get_secret_value())
     await app.state.pool.open(wait=False)
-    logger.info("PrismOS API starting, env=%s", settings.APP_ENV)
+    stop = asyncio.Event()
+    worker_task = None
+    if settings.RUN_WORKER:
+        worker = Worker(
+            pool=app.state.pool,
+            pipeline=pipeline_unavailable,
+            poll_seconds=settings.WORKER_POLL_SECONDS,
+            heartbeat_seconds=settings.HEARTBEAT_SECONDS,
+            stale_seconds=settings.STALE_RUN_SECONDS,
+            max_attempts=settings.MAX_RUN_ATTEMPTS,
+        )
+        worker_task = asyncio.create_task(worker.run_forever(stop))
+    logger.info("PrismOS API starting, env=%s, worker=%s", settings.APP_ENV, settings.RUN_WORKER)
     yield
+    # finish the current step boundary cleanly; a run cut off mid-step is reaped and resumed
+    stop.set()
+    if worker_task:
+        worker_task.cancel()
     await app.state.pool.close()
 
 
@@ -42,10 +60,7 @@ app.add_middleware(
 )
 
 app.include_router(projects_router, prefix="/api/v1")
-# pre-remodel routes on the old tables; replaced in #9 (runs, sessions) and #22 (benchmark)
-app.include_router(runs.router, prefix="/api/v1", tags=["runs"])
-app.include_router(sessions.router, prefix="/api/v1", tags=["sessions"])
-app.include_router(benchmark.router, prefix="/api/v1", tags=["benchmark"])
+app.include_router(runs_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["system"])
