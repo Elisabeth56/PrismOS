@@ -18,9 +18,9 @@ cd ../.. && pnpm dev      # web on :3000, api on :8000
 |---|---|
 | `apps/web` | Next.js frontend |
 | `apps/api/app` | FastAPI API, LangGraph pipeline and agents |
-| `apps/api/app/db/schema.sql` | Current schema (moves to Supabase migrations in #4) |
+| `supabase/` | Migrations, seed (demo account) and local Supabase config |
 
-`pnpm lint`, `pnpm typecheck` and `pnpm test` run across both apps.
+`pnpm lint`, `pnpm typecheck` and `pnpm test` run across both apps. `pnpm db:start` then `pnpm db:reset` gives you a local Supabase with the schema and the demo account (`demo@prismos.dev` / `prismos-demo`).
 
 ## 🧠 Architecture & Agents
 
