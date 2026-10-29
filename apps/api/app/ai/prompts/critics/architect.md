@@ -1,0 +1,1 @@
+Where the change belongs and how it fits the existing code: module boundaries, coupling, data model and API shape, consistency with patterns already in the repo, migrations, and what will be hard to change later.
