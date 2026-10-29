@@ -2,13 +2,17 @@ from __future__ import annotations
 
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, Query
 
 from app.auth import User, current_user
 from app.config import get_settings
 from app.database import Conn, get_conn
+from app.features.github.router import github_transport
 from app.features.runs import logic
+from app.features.runs.approve import approve_run
 from app.features.runs.schemas import RunCreate, RunDetail, RunEventOut, RunOut
+from app.github.app import GitHubApp, get_github_app
 
 router = APIRouter(tags=["runs"])
 
@@ -38,6 +42,18 @@ async def list_events(
 @router.post("/runs/{run_id}/cancel", response_model=RunOut)
 async def cancel_run(run_id: UUID, user: User = Depends(current_user), conn: Conn = Depends(get_conn)):
     return await logic.cancel_run(conn, user.id, run_id)
+
+
+@router.post("/runs/{run_id}/approve", response_model=RunDetail)
+async def approve(
+    run_id: UUID,
+    user: User = Depends(current_user),
+    conn: Conn = Depends(get_conn),
+    github_app: GitHubApp | None = Depends(get_github_app),
+    transport: httpx.AsyncBaseTransport | None = Depends(github_transport),
+):
+    """Opens the pull request. Safe to repeat: a run gets one PR however many times this is called."""
+    return await approve_run(conn, user.id, run_id, github_app, transport)
 
 
 @router.get("/projects/{project_id}/runs", response_model=list[RunOut])
