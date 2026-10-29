@@ -11,7 +11,7 @@ from app.database import Conn, get_conn
 from app.features.github.router import github_transport
 from app.features.runs import logic
 from app.features.runs.approve import approve_run
-from app.features.runs.schemas import RunCreate, RunDetail, RunEventOut, RunOut
+from app.features.runs.schemas import RunCreate, RunDetail, RunEventOut, RunOut, RunSummary
 from app.github.app import GitHubApp, get_github_app
 
 router = APIRouter(tags=["runs"])
@@ -56,6 +56,6 @@ async def approve(
     return await approve_run(conn, user.id, run_id, github_app, transport)
 
 
-@router.get("/projects/{project_id}/runs", response_model=list[RunOut])
+@router.get("/projects/{project_id}/runs", response_model=list[RunSummary])
 async def list_runs(project_id: UUID, user: User = Depends(current_user), conn: Conn = Depends(get_conn)):
     return await logic.list_runs(conn, user.id, project_id)

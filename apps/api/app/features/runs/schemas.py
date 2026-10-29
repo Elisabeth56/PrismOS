@@ -82,6 +82,12 @@ class ConflictOut(BaseModel):
     owner: str | None
 
 
+class RunSummary(RunOut):
+    """A row in the run history."""
+
+    conflict_count: int
+
+
 class RunDetail(RunOut):
     """A run with everything it has produced so far, for the run and review pages."""
 
