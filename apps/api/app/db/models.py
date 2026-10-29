@@ -16,8 +16,7 @@ Organised in layers:
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -70,23 +69,23 @@ class FileContent(BaseModel):
 
 class ContextInputPayload(BaseModel):
     """Raw context provided by the user at run creation."""
-    github_url: Optional[str] = None
-    file_contents: Optional[List[FileContent]] = None
-    screenshot_urls: Optional[List[str]] = None
-    product_url: Optional[str] = None
-    description: Optional[str] = None
-    stack_info: Optional[str] = None
+    github_url: str | None = None
+    file_contents: list[FileContent] | None = None
+    screenshot_urls: list[str] | None = None
+    product_url: str | None = None
+    description: str | None = None
+    stack_info: str | None = None
 
 
 class ProductContextSummary(BaseModel):
     """Structured output from Agent 0 — Context Analyst."""
     product_type: str = ""
-    core_existing_features: List[str] = Field(default_factory=list)
+    core_existing_features: list[str] = Field(default_factory=list)
     frontend_stack: str = ""
     backend_stack: str = ""
-    database_models: List[str] = Field(default_factory=list)
-    current_api_routes: List[str] = Field(default_factory=list)
-    constraints_and_risks: List[str] = Field(default_factory=list)
+    database_models: list[str] = Field(default_factory=list)
+    current_api_routes: list[str] = Field(default_factory=list)
+    constraints_and_risks: list[str] = Field(default_factory=list)
     raw_analysis: str = ""
 
 
@@ -100,15 +99,15 @@ class IntakeOutput(BaseModel):
     restated_request: str = ""
     feature_classification: str = ""
     classification_reason: str = ""
-    ambiguities: List[str] = Field(default_factory=list)
-    assumptions: List[str] = Field(default_factory=list)
+    ambiguities: list[str] = Field(default_factory=list)
+    assumptions: list[str] = Field(default_factory=list)
     raw_output: str = ""
 
 
 class PRDOutput(BaseModel):
     """Step 2 — PM Agent output."""
     prd: str = ""
-    user_stories: List[str] = Field(default_factory=list)
+    user_stories: list[str] = Field(default_factory=list)
     mvp_boundary: str = ""
     raw_output: str = ""
 
@@ -135,7 +134,7 @@ class UXDesignOutput(BaseModel):
 
 class EngineerOutput(BaseModel):
     """Step 5 — Engineer Agent output."""
-    code_files: List[Dict[str, str]] = Field(default_factory=list)
+    code_files: list[dict[str, str]] = Field(default_factory=list)
     change_manifest: str = ""
     setup_guide: str = ""
     raw_output: str = ""
@@ -143,7 +142,7 @@ class EngineerOutput(BaseModel):
 
 class QAOutput(BaseModel):
     """Step 6 — QA Agent output."""
-    test_scenarios: List[str] = Field(default_factory=list)
+    test_scenarios: list[str] = Field(default_factory=list)
     bug_report: str = ""
     frontend_checks: str = ""
     verdict: str = ""
@@ -158,7 +157,7 @@ class QAOutput(BaseModel):
 class ConflictRecord(BaseModel):
     """A single conflict detected during the parallel debate."""
     conflict_id: str
-    agents_involved: List[str]
+    agents_involved: list[str]
     summary: str
     topic: str = ""
 
@@ -166,7 +165,7 @@ class ConflictRecord(BaseModel):
 class ReleaseDecision(BaseModel):
     """A binding decision issued by the Release Manager."""
     conflict_id: str
-    agents_involved: List[str]
+    agents_involved: list[str]
     summary: str
     resolution: str
     rationale: str
@@ -207,20 +206,20 @@ class FinalPackage(BaseModel):
     verdict: str = ""
     architecture_summary: str = ""
     ux_spec: str = ""
-    change_summary: Optional[ChangeSummary] = None
-    files: List[FileChange] = Field(default_factory=list)
+    change_summary: ChangeSummary | None = None
+    files: list[FileChange] = Field(default_factory=list)
 
 
 class BenchmarkMetrics(BaseModel):
     """Comparison metrics between baseline (Mode A) and PrismOS (Mode B)."""
-    requirement_coverage: Dict[str, int] = Field(
+    requirement_coverage: dict[str, int] = Field(
         default_factory=lambda: {"baseline": 0, "prismos": 0}
     )
     conflict_count: int = 0
-    edge_cases_handled: Dict[str, int] = Field(
+    edge_cases_handled: dict[str, int] = Field(
         default_factory=lambda: {"baseline": 0, "prismos": 0}
     )
-    verdict_clarity: Dict[str, bool] = Field(
+    verdict_clarity: dict[str, bool] = Field(
         default_factory=lambda: {"baseline": False, "prismos": False}
     )
 
@@ -238,16 +237,16 @@ class BenchmarkResult(BaseModel):
 
 class MemoryEntry(BaseModel):
     """A single entry in the project memory store."""
-    id: Optional[str] = None
+    id: str | None = None
     project_id: str
-    session_id: Optional[str] = None
+    session_id: str | None = None
     entry_type: MemoryEntryType
     title: str
     content: str
-    agents_involved: List[str] = Field(default_factory=list)
-    feature_classification: Optional[str] = None
-    relevance_tags: List[str] = Field(default_factory=list)
-    created_at: Optional[str] = None
+    agents_involved: list[str] = Field(default_factory=list)
+    feature_classification: str | None = None
+    relevance_tags: list[str] = Field(default_factory=list)
+    created_at: str | None = None
 
 
 # =============================================================================
@@ -257,91 +256,91 @@ class MemoryEntry(BaseModel):
 
 class SessionRow(BaseModel):
     """Maps to the `sessions` table."""
-    id: Optional[str] = None
-    project_id: Optional[str] = None
-    session_token: Optional[str] = None
+    id: str | None = None
+    project_id: str | None = None
+    session_token: str | None = None
     feature_request: str
-    feature_classification: Optional[str] = None
+    feature_classification: str | None = None
     context_provided: bool = False
     step_completed: int = 0
     status: str = "running"
-    verdict: Optional[str] = None
-    created_at: Optional[str] = None
-    completed_at: Optional[str] = None
+    verdict: str | None = None
+    created_at: str | None = None
+    completed_at: str | None = None
 
 
 class ProductContextRow(BaseModel):
     """Maps to the `product_contexts` table."""
-    id: Optional[str] = None
+    id: str | None = None
     session_id: str
-    product_type: Optional[str] = None
-    frontend_stack: Optional[str] = None
-    backend_stack: Optional[str] = None
-    database_models: List[str] = Field(default_factory=list)
-    current_api_routes: List[str] = Field(default_factory=list)
-    constraints_and_risks: List[str] = Field(default_factory=list)
-    raw_analysis: Optional[str] = None
-    context_inputs: Optional[Dict[str, Any]] = None
-    created_at: Optional[str] = None
+    product_type: str | None = None
+    frontend_stack: str | None = None
+    backend_stack: str | None = None
+    database_models: list[str] = Field(default_factory=list)
+    current_api_routes: list[str] = Field(default_factory=list)
+    constraints_and_risks: list[str] = Field(default_factory=list)
+    raw_analysis: str | None = None
+    context_inputs: dict[str, Any] | None = None
+    created_at: str | None = None
 
 
 class AgentOutputRow(BaseModel):
     """Maps to the `agent_outputs` table."""
-    id: Optional[str] = None
+    id: str | None = None
     session_id: str
     agent: str
     step: int
     output: str
-    created_at: Optional[str] = None
+    created_at: str | None = None
 
 
 class ConflictLogRow(BaseModel):
     """Maps to the `conflict_logs` table."""
-    id: Optional[str] = None
+    id: str | None = None
     session_id: str
     conflict_id: str
-    agents_involved: List[str]
+    agents_involved: list[str]
     summary: str
     resolution: str
     rationale: str
-    created_at: Optional[str] = None
+    created_at: str | None = None
 
 
 class BenchmarkRecordRow(BaseModel):
     """Maps to the `benchmark_records` table."""
-    id: Optional[str] = None
+    id: str | None = None
     session_id: str
-    baseline_output: Optional[str] = None
-    baseline_issues_count: Optional[int] = None
-    prismos_issues_count: Optional[int] = None
-    prismos_conflict_count: Optional[int] = None
-    prismos_edge_cases: Optional[int] = None
-    verdict_clarity: Optional[bool] = None
-    created_at: Optional[str] = None
+    baseline_output: str | None = None
+    baseline_issues_count: int | None = None
+    prismos_issues_count: int | None = None
+    prismos_conflict_count: int | None = None
+    prismos_edge_cases: int | None = None
+    verdict_clarity: bool | None = None
+    created_at: str | None = None
 
 
 class ProjectRow(BaseModel):
     """Maps to the `projects` table."""
-    id: Optional[str] = None
+    id: str | None = None
     name: str
-    description: Optional[str] = None
-    session_token: Optional[str] = None
-    created_at: Optional[str] = None
-    last_run_at: Optional[str] = None
+    description: str | None = None
+    session_token: str | None = None
+    created_at: str | None = None
+    last_run_at: str | None = None
 
 
 class MemoryEntryRow(BaseModel):
     """Maps to the `memory_entries` table."""
-    id: Optional[str] = None
+    id: str | None = None
     project_id: str
-    session_id: Optional[str] = None
+    session_id: str | None = None
     entry_type: str
     title: str
     content: str
-    agents_involved: List[str] = Field(default_factory=list)
-    feature_classification: Optional[str] = None
-    relevance_tags: List[str] = Field(default_factory=list)
-    created_at: Optional[str] = None
+    agents_involved: list[str] = Field(default_factory=list)
+    feature_classification: str | None = None
+    relevance_tags: list[str] = Field(default_factory=list)
+    created_at: str | None = None
 
 
 # =============================================================================
@@ -351,10 +350,10 @@ class MemoryEntryRow(BaseModel):
 
 class CreateRunRequest(BaseModel):
     """POST /api/v1/runs"""
-    project_id: Optional[str] = None
+    project_id: str | None = None
     feature_request: str
     feature_classification: FeatureClassification = "new_feature"
-    context_inputs: Optional[ContextInputPayload] = None
+    context_inputs: ContextInputPayload | None = None
 
 
 class CreateRunResponse(BaseModel):
@@ -367,9 +366,9 @@ class SessionSummary(BaseModel):
     """Single item in the sessions list response."""
     id: str
     feature_request: str
-    feature_classification: Optional[str] = None
-    verdict: Optional[str] = None
-    created_at: Optional[str] = None
+    feature_classification: str | None = None
+    verdict: str | None = None
+    created_at: str | None = None
     step_completed: int = 0
     context_provided: bool = False
     conflicts_resolved: int = 0
@@ -378,37 +377,37 @@ class SessionSummary(BaseModel):
 
 class SessionListResponse(BaseModel):
     """GET /api/v1/sessions"""
-    sessions: List[SessionSummary]
+    sessions: list[SessionSummary]
 
 
 class SessionDetailResponse(BaseModel):
     """GET /api/v1/sessions/{id}"""
     id: str
     feature_request: str
-    feature_classification: Optional[str] = None
-    product_context: Optional[ProductContextSummary] = None
-    intake: Optional[Dict[str, Any]] = None
-    prd: Optional[Dict[str, Any]] = None
-    architect_response: Optional[Dict[str, Any]] = None
-    uiux_response: Optional[Dict[str, Any]] = None
-    engineer_response: Optional[Dict[str, Any]] = None
-    qa_response: Optional[Dict[str, Any]] = None
-    conflicts: List[Dict[str, Any]] = Field(default_factory=list)
-    final_package: Optional[Dict[str, Any]] = None
-    benchmark: Optional[Dict[str, Any]] = None
+    feature_classification: str | None = None
+    product_context: ProductContextSummary | None = None
+    intake: dict[str, Any] | None = None
+    prd: dict[str, Any] | None = None
+    architect_response: dict[str, Any] | None = None
+    uiux_response: dict[str, Any] | None = None
+    engineer_response: dict[str, Any] | None = None
+    qa_response: dict[str, Any] | None = None
+    conflicts: list[dict[str, Any]] = Field(default_factory=list)
+    final_package: dict[str, Any] | None = None
+    benchmark: dict[str, Any] | None = None
 
 
 class BenchmarkResponse(BaseModel):
     """GET /api/v1/benchmark/{sessionId}"""
     session_id: str
-    baseline_output: Optional[str] = None
-    metrics: Optional[BenchmarkMetrics] = None
+    baseline_output: str | None = None
+    metrics: BenchmarkMetrics | None = None
 
 
 class CreateProjectRequest(BaseModel):
     """POST /api/v1/projects"""
     name: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class CreateProjectResponse(BaseModel):
@@ -421,18 +420,18 @@ class CreateProjectResponse(BaseModel):
 class UpdateProjectRequest(BaseModel):
     """PUT /api/v1/projects/{id}"""
     name: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class UpdateProjectResponse(BaseModel):
     """PUT /api/v1/projects/{id} → 200"""
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class ProjectMemoryResponse(BaseModel):
     """GET /api/v1/projects/{id}/memory"""
     project_id: str
     entry_count: int
-    entries: List[MemoryEntry]
+    entries: list[MemoryEntry]

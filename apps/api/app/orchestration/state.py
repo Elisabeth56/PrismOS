@@ -8,7 +8,8 @@ partial dicts to update specific fields.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Required
+
 from typing_extensions import TypedDict
 
 
@@ -20,18 +21,18 @@ class PrismOSState(TypedDict, total=False):
     """
 
     # ── Identity ─────────────────────────────────────────────────────────
-    session_id: str
-    project_id: Optional[str]
-    user_input: str                          # raw feature request
+    session_id: Required[str]
+    project_id: str | None
+    user_input: Required[str]                # raw feature request
     feature_classification: str              # new_feature | enhancement | refactor | bug_fix
 
     # ── Context ──────────────────────────────────────────────────────────
-    context_inputs: Dict[str, Any]           # raw ContextInputPayload
+    context_inputs: dict[str, Any]           # raw ContextInputPayload
     product_context: str                     # Agent 0 raw markdown output
-    product_context_summary: Dict[str, Any]  # structured ProductContextSummary
+    product_context_summary: dict[str, Any]  # structured ProductContextSummary
 
     # ── Memory ───────────────────────────────────────────────────────────
-    project_memory: List[Dict[str, Any]]     # loaded MemoryEntry dicts
+    project_memory: list[dict[str, Any]]     # loaded MemoryEntry dicts
     project_memory_text: str                 # formatted for injection into prompts
 
     # ── Step Tracking ────────────────────────────────────────────────────
@@ -48,18 +49,18 @@ class PrismOSState(TypedDict, total=False):
     qa_validation_output: str                # Step 6 — QA validation + verdict
 
     # ── Conflicts ────────────────────────────────────────────────────────
-    conflicts: List[Dict[str, Any]]          # detected ConflictRecords
+    conflicts: list[dict[str, Any]]          # detected ConflictRecords
     release_decisions: str                   # Step 4 — Release Manager output
     has_conflicts: bool                      # flag for conditional edge
 
     # ── Final ────────────────────────────────────────────────────────────
     final_code: str
     qa_verdict: str                          # SHIPPABLE | NEEDS_REVISION
-    final_package: Dict[str, Any]
+    final_package: dict[str, Any]
 
     # ── Benchmark ────────────────────────────────────────────────────────
     baseline_output: str                     # Mode A single-call output
-    benchmark: Dict[str, Any]
+    benchmark: dict[str, Any]
 
     # ── Error ────────────────────────────────────────────────────────────
-    error: Optional[str]
+    error: str | None

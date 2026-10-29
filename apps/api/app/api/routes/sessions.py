@@ -8,7 +8,6 @@ Session endpoints:
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -27,9 +26,9 @@ router = APIRouter()
 
 @router.get("/sessions", response_model=SessionListResponse)
 async def list_sessions(
-    project_id: Optional[str] = None,
+    project_id: str | None = None,
     db=Depends(get_db),
-    session_token: Optional[str] = Depends(get_session_token),
+    session_token: str | None = Depends(get_session_token),
 ):
     """
     List past sessions, filtered by the anonymous X-Session-Token header
@@ -190,4 +189,4 @@ async def delete_session(
         return {"success": success}
     except Exception as e:
         logger.error("Failed to delete session: %s", e)
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Failed to delete session") from e
