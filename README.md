@@ -1,56 +1,26 @@
 # PrismOS
 
-**PrismOS** is an autonomous AI operating system designed to orchestrate 7 specialized agents to ship features directly into your existing product. Context-aware, conflict-resolving, and production-ready.
+One request in. One reviewed pull request out.
 
-## 🏆 Hackathon Submission
+> Being remodelled. The plan is tracked in issues #1–#24; this README is rewritten in #24.
 
-PrismOS is our submission for the hackathon, demonstrating a fully autonomous software delivery pipeline powered by multi-agent orchestration. Key features include:
-- **7-Agent Pipeline**: A LangGraph orchestrated workflow where 7 specialized agents (Analyst, PM, Architect, UI/UX, Engineer, QA, Release Manager) collaborate to write and review production code.
-- **Project Memory**: The system natively retains project context, accumulating architectural decisions and constraints into Supabase to inform future agent runs.
-- **Live Streaming**: Leverages Server-Sent Events (SSE) to stream the agents' internal thought processes and outputs to the Next.js frontend in real-time.
+## Getting started
 
-## ☁️ Proof of Alibaba Cloud Deployment
-
-To verify our integration with Alibaba Cloud infrastructure and models, please review the following core files in our implementation:
-- **Qwen / DashScope LLM Usage**: Check `backend/agents/base.py` (where our LangChain implementation natively utilizes Alibaba Dashscope models).
-- **Alibaba Cloud OSS Usage**: Check `backend/storage/oss.py` (where the final codebase packages are bundled and stored securely in OSS).
-
-## 🚀 Getting Started
-
-### 1. Frontend Setup
-
-First, install the frontend dependencies:
+Requires Node 22 with pnpm, and Python 3.12+ with [uv](https://docs.astral.sh/uv/).
 
 ```bash
-npm install
+pnpm install              # web dependencies
+cd apps/api && uv sync    # api dependencies
+cd ../.. && pnpm dev      # web on :3000, api on :8000
 ```
 
-Then, run the development server:
+| Path | What it is |
+|---|---|
+| `apps/web` | Next.js frontend |
+| `apps/api/app` | FastAPI API, LangGraph pipeline and agents |
+| `apps/api/app/db/schema.sql` | Current schema (moves to Supabase migrations in #4) |
 
-```bash
-npm run dev
-# or
-yarn dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-### 2. Backend Setup
-
-The backend is a Python FastAPI application. First, ensure you have Python installed, then set up your environment:
-
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-Run the backend server locally:
-
-```bash
-uvicorn main:app --reload --port 8000
-```
+`pnpm lint`, `pnpm typecheck` and `pnpm test` run across both apps.
 
 ## 🧠 Architecture & Agents
 

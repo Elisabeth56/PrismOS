@@ -1,20 +1,8 @@
-version: '3.8'
-
 services:
-  backend:
-    build: ./backend
-    container_name: prismos-backend
+  api:
+    build: ./apps/api
     ports:
       - "8000:8000"
     env_file:
-      - ./backend/.env.local
+      - ./apps/api/.env
     restart: unless-stopped
-
-  frontend:
-    build: .
-    container_name: prismos-frontend
-    ports:
-      - "80:3000"
-    restart: unless-stopped
-    depends_on:
-      - backend
