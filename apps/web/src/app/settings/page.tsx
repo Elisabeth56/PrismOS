@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { updateProject } from '@/lib/api'
+import { API_BASE, updateProject } from '@/lib/api'
 
 export default function SettingsPage() {
   const [apiBase, setApiBase] = useState('')
@@ -15,7 +15,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setApiBase(process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.prismos.app/api/v1')
+    setApiBase(API_BASE)
      
     setSessionToken(localStorage.getItem('session_token') || 'Not set — will be generated on first run')
   }, [])

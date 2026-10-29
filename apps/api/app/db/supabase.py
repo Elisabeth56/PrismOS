@@ -23,16 +23,7 @@ def get_supabase() -> Client:
     """Return a cached Supabase client instance."""
     settings = get_settings()
 
-    if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_ROLE_KEY:
-        logger.warning(
-            "Supabase credentials not configured — "
-            "DB operations will fail until SUPABASE_URL and "
-            "SUPABASE_SERVICE_ROLE_KEY are set in .env"
-        )
-
-    client = create_client(
-        settings.SUPABASE_URL,
-        settings.SUPABASE_SERVICE_ROLE_KEY,
-    )
-    logger.info("Supabase client initialised for %s", settings.SUPABASE_URL)
+    url = str(settings.SUPABASE_URL).rstrip("/")
+    client = create_client(url, settings.SUPABASE_SERVICE_ROLE_KEY.get_secret_value())
+    logger.info("Supabase client initialised for %s", url)
     return client

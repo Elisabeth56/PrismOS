@@ -8,12 +8,10 @@ import type {
   Project,
   MemoryEntry,
 } from './types'
+import { env } from './env'
 import { getSessionToken } from './useSessionToken'
 
-export const API_BASE =
-  typeof window !== 'undefined'
-    ? process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000/api/v1'
-    : process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000/api/v1'
+export const API_BASE = env.NEXT_PUBLIC_API_BASE_URL
 
 // ---------------------------------------------------------------------------
 // Generic helpers
