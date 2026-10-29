@@ -12,7 +12,7 @@ Hackathon: full load of all entries (max 20).
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from app.db import queries
 from app.db.supabase import get_supabase
@@ -20,7 +20,7 @@ from app.db.supabase import get_supabase
 logger = logging.getLogger("prismos.memory.loader")
 
 
-async def load_memory(project_id: str) -> List[Dict[str, Any]]:
+async def load_memory(project_id: str) -> list[dict[str, Any]]:
     """
     Load all memory entries for a project.
 
@@ -42,7 +42,7 @@ async def load_memory(project_id: str) -> List[Dict[str, Any]]:
         return []
 
 
-def format_memory_for_prompt(entries: List[Dict[str, Any]]) -> str:
+def format_memory_for_prompt(entries: list[dict[str, Any]]) -> str:
     """
     Format memory entries into a text block for system prompt injection.
 
@@ -51,7 +51,7 @@ def format_memory_for_prompt(entries: List[Dict[str, Any]]) -> str:
     if not entries:
         return ""
 
-    by_type: Dict[str, List[str]] = {}
+    by_type: dict[str, list[str]] = {}
     for e in entries:
         etype = e.get("entry_type", "unknown")
         title = e.get("title", "")

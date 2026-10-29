@@ -30,6 +30,14 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency injection is declared in default arguments by design
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Header", "fastapi.Query", "fastapi.Path"]
+
+[tool.ruff.lint.per-file-ignores]
+# long prompt strings; prompts move to ai/prompts/*.md in #8
+"app/agents/*.py" = ["E501"]
+
 [tool.pyright]
 include = ["app", "tests"]
 pythonVersion = "3.12"
@@ -39,3 +47,4 @@ venv = ".venv"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

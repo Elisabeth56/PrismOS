@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Dict, List
+from typing import Any
 
 import httpx
 
@@ -39,7 +39,7 @@ FRAMEWORK_SIGNALS = {
 }
 
 
-async def crawl_url(product_url: str) -> Dict[str, Any]:
+async def crawl_url(product_url: str) -> dict[str, Any]:
     """
     Crawl a product URL and extract technology signals.
 
@@ -50,7 +50,7 @@ async def crawl_url(product_url: str) -> Dict[str, Any]:
       - headers_info: relevant response headers
       - meta_tags: extracted meta descriptions/titles
     """
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "url": product_url,
         "status": None,
         "detected_tech": [],
@@ -77,7 +77,7 @@ async def crawl_url(product_url: str) -> Dict[str, Any]:
 
             # Scan HTML for framework signals
             html = resp.text[:50000]  # cap at 50KB
-            detected: List[str] = []
+            detected: list[str] = []
             for tech, patterns in FRAMEWORK_SIGNALS.items():
                 for pattern in patterns:
                     if re.search(pattern, html, re.IGNORECASE):

@@ -7,7 +7,6 @@ Uses pydantic-settings for validation and type coercion.
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import List
 
 from pydantic_settings import BaseSettings
 
@@ -40,7 +39,7 @@ class Settings(BaseSettings):
     MAX_FILE_COUNT: int = 5
 
     @property
-    def cors_origins_list(self) -> List[str]:
+    def cors_origins_list(self) -> list[str]:
         """Parse comma-separated CORS origins into a list."""
         return [o.strip().strip('"').strip("'") for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
@@ -55,7 +54,7 @@ class Settings(BaseSettings):
     }
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     """Cached singleton — call this instead of constructing Settings() directly."""
     return Settings()

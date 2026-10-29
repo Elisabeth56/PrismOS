@@ -18,7 +18,7 @@ from app.config import get_settings
 logger = logging.getLogger("prismos.db")
 
 
-@lru_cache()
+@lru_cache
 def get_supabase() -> Client:
     """Return a cached Supabase client instance."""
     settings = get_settings()

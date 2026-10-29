@@ -19,7 +19,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger("prismos.streaming")
 
@@ -38,7 +38,7 @@ class SSEEventBus:
     """
 
     def __init__(self) -> None:
-        self._queues: Dict[str, List[asyncio.Queue]] = {}
+        self._queues: dict[str, list[asyncio.Queue]] = {}
 
     def subscribe(self, session_id: str) -> asyncio.Queue:
         """Create and return a new subscriber queue for a session."""
@@ -61,7 +61,7 @@ class SSEEventBus:
                           session_id, len(self._queues.get(session_id, [])))
 
     async def emit(
-        self, session_id: str, event_type: str, data: Dict[str, Any]
+        self, session_id: str, event_type: str, data: dict[str, Any]
     ) -> None:
         """Emit an event to all subscribers of a session."""
         if session_id not in self._queues:
@@ -145,7 +145,7 @@ async def emit_context_analyst_token(session_id: str, token: str) -> None:
 
 
 async def emit_context_analyst_done(
-    session_id: str, summary: Dict[str, Any]
+    session_id: str, summary: dict[str, Any]
 ) -> None:
     await event_bus.emit(session_id, "context_analyst_done", {
         "summary": summary,
@@ -184,7 +184,7 @@ async def emit_run_start(session_id: str, step: int) -> None:
 async def emit_run_complete(
     session_id: str,
     verdict: str,
-    package: Dict[str, Any],
+    package: dict[str, Any],
 ) -> None:
     await event_bus.emit(session_id, "run_complete", {
         "verdict": verdict,
@@ -250,7 +250,7 @@ async def emit_conflict_token(
 async def emit_conflict_done(
     session_id: str,
     conflict_id: str,
-    agents_involved: List[str],
+    agents_involved: list[str],
     summary: str,
     resolution: str,
     rationale: str,
