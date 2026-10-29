@@ -1,50 +1,24 @@
-"""Schema and access tests: applies the Supabase migrations and seed to a fresh database and checks RLS.
-
-Needs TEST_DATABASE_URL pointing at a Postgres server where the user can create databases (CI provides one).
-"""
+"""Schema and access tests against the migrated database: RLS, grants and constraints."""
 
 import json
-import os
 import uuid
 from collections.abc import Iterator
-from pathlib import Path
 from typing import LiteralString
 
 import psycopg
 import pytest
 from psycopg import errors, sql
-from psycopg.conninfo import make_conninfo
 
-ROOT = Path(__file__).resolve().parents[4]
-MIGRATIONS = sorted((ROOT / "supabase" / "migrations").glob("*.sql"))
-SEED = ROOT / "supabase" / "seed.sql"
-SHIM = Path(__file__).with_name("supabase_shim.sql")
+from tests.conftest import DEMO_CONFLICT, DEMO_RUN, DEMO_USER, needs_db
 
-DEMO_USER = "00000000-0000-4000-8000-00000000d3e0"
-DEMO_RUN = "00000000-0000-4000-8000-0000000007f3"
-DEMO_CONFLICT = "00000000-0000-4000-8000-00000000c031"
 RUN_TABLES = ["run_steps", "run_events", "conflicts", "decisions", "changes"]
-
-admin_url = os.environ.get("TEST_DATABASE_URL")
-pytestmark = pytest.mark.skipif(not admin_url, reason="TEST_DATABASE_URL not set")
+pytestmark = needs_db
 
 
 @pytest.fixture(scope="module")
-def db() -> Iterator[psycopg.Connection]:
-    """A throwaway database with the shim, every migration and the seed applied."""
-    assert admin_url
-    db_name = f"prismos_test_{uuid.uuid4().hex[:8]}"
-    name = sql.Identifier(db_name)
-    with psycopg.connect(admin_url, autocommit=True) as admin:
-        admin.execute(sql.SQL("create database {}").format(name))
-    try:
-        with psycopg.connect(make_conninfo(admin_url, dbname=db_name), autocommit=True) as conn:
-            for path in [SHIM, *MIGRATIONS, SEED]:
-                conn.execute(path.read_bytes())
-            yield conn
-    finally:
-        with psycopg.connect(admin_url, autocommit=True) as admin:
-            admin.execute(sql.SQL("drop database if exists {} with (force)").format(name))
+def db(migrated_db_url) -> Iterator[psycopg.Connection]:
+    with psycopg.connect(migrated_db_url, autocommit=True) as conn:
+        yield conn
 
 
 def as_user(

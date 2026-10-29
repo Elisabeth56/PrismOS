@@ -22,6 +22,10 @@ class Settings(BaseSettings):
 
     SUPABASE_URL: HttpUrl
     SUPABASE_SERVICE_ROLE_KEY: SecretStr
+    # direct Postgres connection (Supabase session pooler on IPv4 hosts); queries are scoped by membership in SQL
+    DATABASE_URL: SecretStr
+    # only for projects still on Supabase's legacy HS256 JWT secret; newer projects verify against the JWKS
+    SUPABASE_JWT_SECRET: SecretStr | None = None
 
     # optional: raises GitHub's rate limit for public repo reads
     GITHUB_TOKEN: SecretStr | None = None

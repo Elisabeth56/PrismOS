@@ -9,6 +9,7 @@ import type {
   MemoryEntry,
 } from './types'
 import { env } from './env'
+import { createClient } from './supabase/client'
 import { getSessionToken } from './useSessionToken'
 
 export const API_BASE = env.NEXT_PUBLIC_API_BASE_URL
@@ -38,7 +39,13 @@ async function request<T>(
       'Content-Type': 'application/json',
     }
 
-    // Attach anonymous session token if available
+    // signed-in requests carry the Supabase access token; the API verifies it on every call
+    if (typeof window !== 'undefined') {
+      const { data } = await createClient().auth.getSession()
+      if (data.session) headers['Authorization'] = `Bearer ${data.session.access_token}`
+    }
+
+    // pre-remodel endpoints still read the anonymous token; removed with them in #9
     const token = getSessionToken()
     if (token) {
       headers['X-Session-Token'] = token
