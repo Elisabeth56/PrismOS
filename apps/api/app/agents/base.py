@@ -32,8 +32,8 @@ def _get_client() -> AsyncOpenAI:
     if _client is None:
         settings = get_settings()
         _client = AsyncOpenAI(
-            api_key=settings.QWEN_API_KEY,
-            base_url=settings.QWEN_API_BASE,
+            api_key=settings.QWEN_API_KEY.get_secret_value(),
+            base_url=str(settings.QWEN_API_BASE),
         )
         logger.info("Qwen client initialised")
     return _client
