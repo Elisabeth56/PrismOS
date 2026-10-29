@@ -9,7 +9,7 @@ from app.config import Settings
 from app.database import Conn
 from app.errors import AppError
 from app.features.projects.logic import get_project
-from app.features.runs.schemas import RunCreate, RunDetail, RunOut
+from app.features.runs.schemas import RunCreate, RunDetail, RunEventOut, RunOut
 
 RUN_COLUMNS = """r.id, r.project_id, r.feature_request, r.base_branch, r.status::text as status, r.current_step,
                  r.verdict, r.pr_url, r.pr_number, r.error, r.tokens_in, r.tokens_out,
@@ -115,3 +115,23 @@ async def cancel_run(conn: Conn, user_id: str, run_id: UUID) -> RunOut:
     if existing is None:
         raise NOT_FOUND
     raise AppError(409, "run_finished", f"This run is already {existing['status'].replace('_', ' ')}.")
+
+
+async def list_events(conn: Conn, user_id: str, run_id: UUID, after: int = 0, limit: int = 500) -> list[RunEventOut]:
+    """Events after a sequence number: the browser replays these, then follows Realtime for new ones (ADR-004)."""
+    rows = await (
+        await conn.execute(
+            """select e.seq, e.type, e.payload, e.created_at from run_events e
+               join runs r on r.id = e.run_id
+               join project_members m on m.project_id = r.project_id and m.user_id = %(user_id)s
+               where e.run_id = %(run_id)s and e.seq > %(after)s
+               order by e.seq limit %(limit)s""",
+            {"user_id": user_id, "run_id": run_id, "after": after, "limit": limit},
+        )
+    ).fetchall()
+    if not rows and after == 0:
+        # an empty stream is fine for a member, but an unknown or foreign run is a 404
+        exists = await (await conn.execute(MEMBER_RUN, {"user_id": user_id, "run_id": run_id})).fetchone()
+        if exists is None:
+            raise NOT_FOUND
+    return [RunEventOut.model_validate(row) for row in rows]
