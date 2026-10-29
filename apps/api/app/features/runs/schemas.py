@@ -73,6 +73,7 @@ class ChangeOut(BaseModel):
 
 class ConflictOut(BaseModel):
     id: UUID
+    label: str
     item_id: str
     kind: Literal["contested", "blocking"]
     objections: list[dict[str, Any]]

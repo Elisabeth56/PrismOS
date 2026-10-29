@@ -33,8 +33,10 @@ class RunContext:
         return str(self.run["id"])
 
     async def emit(self, type_: str, payload: dict[str, Any] | None = None) -> None:
-        """Appends an event to the run's ordered stream (one writer per run, so max(seq)+1 is safe)."""
-        async with self.pool.connection() as conn:
+        """Appends an event to the run's ordered stream."""
+        async with self.pool.connection() as conn, conn.transaction():
+            # critics run in parallel, so steps of one run can emit at the same moment: take turns per run
+            await conn.execute("select pg_advisory_xact_lock(hashtextextended(%s, 0))", (self.run_id,))
             await conn.execute(
                 """insert into run_events (run_id, seq, type, payload)
                    select %s, coalesce(max(seq), 0) + 1, %s, %s from run_events where run_id = %s""",
@@ -80,8 +82,14 @@ class RunContext:
                 """insert into run_steps (run_id, step, attempt, output, model, tokens_in, tokens_out, latency_ms)
                    values (%s, %s, %s, %s, %s, %s, %s, %s) on conflict (run_id, step, attempt) do nothing""",
                 (
-                    self.run_id, step, attempt, result.model_dump_json(),
-                    ",".join(u.model for u in usages) or None, tokens_in, tokens_out, sum(u.latency_ms for u in usages),
+                    self.run_id,
+                    step,
+                    attempt,
+                    result.model_dump_json(),
+                    ",".join(u.model for u in usages) or None,
+                    tokens_in,
+                    tokens_out,
+                    sum(u.latency_ms for u in usages),
                 ),
             )
             await conn.execute(

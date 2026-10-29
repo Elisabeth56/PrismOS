@@ -104,8 +104,9 @@ async def _complete(
             tokens_out=response.usage.completion_tokens if response.usage else 0,
             latency_ms=int((time.monotonic() - started) * 1000),
         )
-        logger.info("llm call: model=%s in=%d out=%d ms=%d", usage.model, usage.tokens_in, usage.tokens_out,
-                    usage.latency_ms)
+        logger.info(
+            "llm call: model=%s in=%d out=%d ms=%d", usage.model, usage.tokens_in, usage.tokens_out, usage.latency_ms
+        )
         return response.choices[0].message.content or "", usage
     raise AssertionError("unreachable")
 

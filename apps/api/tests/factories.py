@@ -42,8 +42,14 @@ def make_project(db_url: str, owner: str, *, default_branch: str = "main") -> st
 
 
 def make_run(db_url: str, project_id: str, user_id: str, *, status: str = "queued", **columns: object) -> str:
-    fields = {"project_id": project_id, "requested_by": user_id, "feature_request": "a test feature request",
-              "base_branch": "main", "status": status, **columns}
+    fields = {
+        "project_id": project_id,
+        "requested_by": user_id,
+        "feature_request": "a test feature request",
+        "base_branch": "main",
+        "status": status,
+        **columns,
+    }
     names = ", ".join(fields)
     placeholders = ", ".join(["%s"] * len(fields))
     with psycopg.connect(db_url, autocommit=True) as conn:
