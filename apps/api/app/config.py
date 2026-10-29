@@ -30,7 +30,11 @@ class Settings(BaseSettings):
     # only for projects still on Supabase's legacy HS256 JWT secret; newer projects verify against the JWKS
     SUPABASE_JWT_SECRET: SecretStr | None = None
 
-    # optional: raises GitHub's rate limit for public repo reads
+    # the PrismOS GitHub App (ADR-001); without it, projects can only read public repos
+    GITHUB_APP_ID: str | None = None
+    # PEM contents; "\n" escapes are accepted so the key fits in one env var
+    GITHUB_APP_PRIVATE_KEY: SecretStr | None = None
+    # optional: raises GitHub's rate limit for public repo reads when no App is configured
     GITHUB_TOKEN: SecretStr | None = None
 
     CORS_ORIGINS: Annotated[list[str], NoDecode] = ["http://localhost:3000", "http://127.0.0.1:3000"]
