@@ -16,6 +16,7 @@ from psycopg_pool import AsyncConnectionPool
 from app.ai.llm import LLMOutputInvalid, LLMUnavailable
 from app.database import Conn
 from app.pipeline.context import Pipeline, RunCancelled, RunContext
+from app.pipeline.repo import RepoUnavailable
 
 logger = logging.getLogger("prismos.worker")
 
@@ -108,6 +109,11 @@ class Worker:
         logger.exception("run %s failed at %s", ctx.run_id, ctx.run.get("current_step"), exc_info=error)
         if isinstance(error, LLMUnavailable):
             body = {"code": "models_unavailable", "message": "The AI providers are rate-limited or down. Retry later."}
+        elif isinstance(error, RepoUnavailable):
+            body = {
+                "code": "repo_unavailable",
+                "message": "Couldn't read the repository. Check the branch exists and PrismOS has access to it.",
+            }
         elif isinstance(error, LLMOutputInvalid):
             body = {"code": "model_output_invalid", "message": "A step returned unusable output twice. Retry the run."}
         else:
@@ -123,8 +129,3 @@ class Worker:
             ).fetchone()
         if row is not None:
             await ctx.emit("run_failed", {**body, "step": row["current_step"]})
-
-
-async def pipeline_unavailable(ctx: RunContext) -> None:
-    """Placeholder until the graph lands (#13): fails runs clearly instead of leaving them queued."""
-    raise RuntimeError("the run pipeline is not wired up yet")

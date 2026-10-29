@@ -12,7 +12,7 @@ from app.ai.llm import Message, Usage
 from app.database import create_pool
 from app.pipeline.graph import build_pipeline, fit_to_repo
 from app.pipeline.outputs import BuildOutput, FileChange, FileSelection, ResolverOutput, VerifierOutput
-from app.pipeline.repo import RepoSnapshot
+from app.pipeline.repo import RepoFiles, RepoSnapshot
 from app.pipeline.review import CriticReview, Decision, Objection, Spec, SpecItem
 from app.worker import Worker
 from tests.conftest import needs_db
@@ -35,11 +35,11 @@ def objection(item_id: str = "1", severity: str = "major") -> Objection:
 
 
 class FakeRepo:
-    async def snapshot(self, repo: str, branch: str) -> RepoSnapshot:
+    async def snapshot(self, branch: str) -> RepoSnapshot:
         return RepoSnapshot(commit_sha="abc123", paths=["app/auth.py", "tests/test_auth.py"])
 
-    async def read(self, repo: str, commit_sha: str, paths: list[str]) -> dict[str, str]:
-        return {path: f"# {path}\n" for path in paths}
+    async def read(self, commit_sha: str, paths: list[str]) -> RepoFiles:
+        return RepoFiles(files={path: f"# {path}\n" for path in paths})
 
 
 class FakeModels:
@@ -96,7 +96,7 @@ def query(db_url: str, sql: str, run_id: str) -> list[tuple]:
 
 
 async def run(pool, models: Callable) -> None:
-    await Worker(pool, build_pipeline(FakeRepo(), models)).tick()  # pyright: ignore[reportArgumentType]
+    await Worker(pool, build_pipeline(lambda project: FakeRepo(), models)).tick()  # pyright: ignore[reportArgumentType]
 
 
 @needs_db
