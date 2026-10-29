@@ -26,7 +26,7 @@ from app.ai.prompting import TEMPERATURE, as_data, render, repo_files
 from app.pipeline import persist
 from app.pipeline.context import Pipeline, RunContext
 from app.pipeline.outputs import BuildOutput, FileChange, FileSelection, ResolverOutput, VerifierOutput
-from app.pipeline.repo import RepoFiles, RepoSnapshot, RepoSource
+from app.pipeline.repo import RepoFiles, RepoFor, RepoSnapshot
 from app.pipeline.review import (
     Critic,
     CriticReview,
@@ -39,6 +39,7 @@ from app.pipeline.review import (
 
 CRITICS: tuple[Critic, ...] = ("architect", "security", "ux")
 MAX_BUILDS = 2  # the first build plus at most one revision
+SMALL_PROMPT_CHARS = 24_000  # about 6K tokens, inside Groq's free per-minute budget
 
 
 class Generate(Protocol):
@@ -50,6 +51,7 @@ class Generate(Protocol):
 class State(TypedDict, total=False):
     snapshot: RepoSnapshot
     files: dict[str, str]
+    omitted: list[str]
     spec: Spec
     outcome: ReviewOutcome
     decisions: list[Decision]
@@ -87,19 +89,22 @@ def _ask(prompt: str) -> list[Message]:
     return [{"role": "user", "content": prompt}]
 
 
-def build_pipeline(repo: RepoSource, generate: Generate = llm.generate) -> Pipeline:
+def build_pipeline(repo_for: RepoFor, generate: Generate = llm.generate) -> Pipeline:
     async def pipeline(ctx: RunContext) -> None:
         run = ctx.run
-        repo_name = await _repo_name(ctx)
+        project = await _project(ctx)
+        repo = repo_for(project)
         request = as_data("request", run["feature_request"])
         context = "\n\n".join(as_data("context", f["content"], name=f["name"]) for f in run["context_files"] or [])
 
         def files_block(state: State) -> str:
-            return "\n\n".join(part for part in (repo_files(state["files"]), context) if part)
+            omitted = state.get("omitted") or []
+            note = f"Not shown (too large or over the context cap): {', '.join(omitted)}" if omitted else ""
+            return "\n\n".join(part for part in (repo_files(state["files"]), note, context) if part)
 
         async def read_repo(state: State) -> State:
             async def produce():
-                return await repo.snapshot(repo_name, run["base_branch"]), []
+                return await repo.snapshot(run["base_branch"]), []
 
             return {"snapshot": await ctx.cached_step("read_repo", RepoSnapshot, produce)}
 
@@ -108,22 +113,28 @@ def build_pipeline(repo: RepoSource, generate: Generate = llm.generate) -> Pipel
             prompt = render(
                 "file_selector",
                 request=request,
-                repo=repo_name,
+                repo=project["repo_full_name"],
                 branch=run["base_branch"],
                 tree=as_data("repo_file", "\n".join(snapshot.paths), path="(file tree)"),
             )
+            # Groq's free tier caps tokens per minute; a big tree goes to Gemini instead (ADR-006)
+            size: Size = "small" if len(prompt) <= SMALL_PROMPT_CHARS else "large"
             selection = await ctx.cached_step(
                 "select_files",
                 FileSelection,
-                lambda: generate(_ask(prompt), FileSelection, size="small", temperature=TEMPERATURE["file_selector"]),
+                lambda: generate(_ask(prompt), FileSelection, size=size, temperature=TEMPERATURE["file_selector"]),
             )
             known = set(snapshot.paths)
             paths = [p for p in dict.fromkeys(selection.paths) if p in known]  # models do invent paths
 
             async def read():
-                return RepoFiles(files=await repo.read(repo_name, snapshot.commit_sha, paths)), []
+                return await repo.read(snapshot.commit_sha, paths), []
 
-            return {"files": (await ctx.cached_step("read_files", RepoFiles, read)).files}
+            loaded = await ctx.cached_step("read_files", RepoFiles, read)
+            await ctx.emit(
+                "files_selected", {"paths": list(loaded.files), "omitted": loaded.omitted, "reason": selection.reason}
+            )
+            return {"files": loaded.files, "omitted": loaded.omitted}
 
         async def plan(state: State) -> State:
             async with ctx.pool.connection() as conn:
@@ -288,10 +299,12 @@ def build_pipeline(repo: RepoSource, generate: Generate = llm.generate) -> Pipel
     return pipeline
 
 
-async def _repo_name(ctx: RunContext) -> str:
+async def _project(ctx: RunContext) -> dict[str, Any]:
     async with ctx.pool.connection() as conn:
         row = await (
-            await conn.execute("select repo_full_name from projects where id = %s", (ctx.run["project_id"],))
+            await conn.execute(
+                "select repo_full_name, github_installation_id from projects where id = %s", (ctx.run["project_id"],)
+            )
         ).fetchone()
     assert row is not None, "runs always belong to a project"
-    return row["repo_full_name"]
+    return dict(row)

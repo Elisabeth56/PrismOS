@@ -15,11 +15,19 @@ from app.database import create_pool
 from app.errors import register_error_handlers
 from app.features.projects.router import router as projects_router
 from app.features.runs.router import router as runs_router
-from app.worker import Worker, pipeline_unavailable
+from app.github.repo import GitHubRepo, static_token
+from app.pipeline.graph import build_pipeline
+from app.worker import Worker
 
 settings = get_settings()
 logging.basicConfig(level=settings.LOG_LEVEL, format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s")
 logger = logging.getLogger("prismos")
+
+
+def repo_for(project: dict) -> GitHubRepo:
+    # until the GitHub App lands (#6) every project reads with the optional server token
+    token = settings.GITHUB_TOKEN.get_secret_value() if settings.GITHUB_TOKEN else None
+    return GitHubRepo(project["repo_full_name"], static_token(token), settings.MAX_FILE_SIZE_BYTES)
 
 
 @asynccontextmanager
@@ -32,7 +40,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if settings.RUN_WORKER:
         worker = Worker(
             pool=app.state.pool,
-            pipeline=pipeline_unavailable,
+            pipeline=build_pipeline(repo_for),
             poll_seconds=settings.WORKER_POLL_SECONDS,
             heartbeat_seconds=settings.HEARTBEAT_SECONDS,
             stale_seconds=settings.STALE_RUN_SECONDS,
