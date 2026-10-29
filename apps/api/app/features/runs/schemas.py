@@ -87,3 +87,10 @@ class RunDetail(RunOut):
     steps: dict[str, Any]
     conflicts: list[ConflictOut]
     changes: list[ChangeOut]
+
+
+class RunEventOut(BaseModel):
+    seq: int
+    type: str
+    payload: dict[str, Any]
+    created_at: datetime

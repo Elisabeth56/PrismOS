@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.auth import User, current_user
 from app.config import get_settings
 from app.database import Conn, get_conn
 from app.features.runs import logic
-from app.features.runs.schemas import RunCreate, RunDetail, RunOut
+from app.features.runs.schemas import RunCreate, RunDetail, RunEventOut, RunOut
 
 router = APIRouter(tags=["runs"])
 
@@ -22,6 +22,17 @@ async def create_run(body: RunCreate, user: User = Depends(current_user), conn: 
 @router.get("/runs/{run_id}", response_model=RunDetail)
 async def get_run(run_id: UUID, user: User = Depends(current_user), conn: Conn = Depends(get_conn)):
     return await logic.get_run(conn, user.id, run_id)
+
+
+@router.get("/runs/{run_id}/events", response_model=list[RunEventOut])
+async def list_events(
+    run_id: UUID,
+    after: int = Query(default=0, ge=0),
+    user: User = Depends(current_user),
+    conn: Conn = Depends(get_conn),
+):
+    """Events with seq > after, oldest first (up to 500)."""
+    return await logic.list_events(conn, user.id, run_id, after)
 
 
 @router.post("/runs/{run_id}/cancel", response_model=RunOut)
