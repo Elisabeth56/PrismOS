@@ -9,7 +9,7 @@ from app.config import Settings
 from app.database import Conn
 from app.errors import AppError
 from app.features.projects.logic import get_project
-from app.features.runs.schemas import RunCreate, RunDetail, RunEventOut, RunOut
+from app.features.runs.schemas import RunCreate, RunDetail, RunEventOut, RunOut, RunSummary
 
 RUN_COLUMNS = """r.id, r.project_id, r.feature_request, r.base_branch, r.status::text as status, r.current_step,
                  r.verdict, r.pr_url, r.pr_number, r.error, r.tokens_in, r.tokens_out,
@@ -86,15 +86,16 @@ async def get_run(conn: Conn, user_id: str, run_id: UUID) -> RunDetail:
     )
 
 
-async def list_runs(conn: Conn, user_id: str, project_id: UUID, limit: int = 50) -> list[RunOut]:
+async def list_runs(conn: Conn, user_id: str, project_id: UUID, limit: int = 50) -> list[RunSummary]:
     await get_project(conn, user_id, project_id)
     rows = await (
         await conn.execute(
-            f"select {RUN_COLUMNS} from runs r where r.project_id = %s order by r.created_at desc limit %s",
+            f"""select {RUN_COLUMNS}, (select count(*) from conflicts c where c.run_id = r.id) as conflict_count
+                from runs r where r.project_id = %s order by r.created_at desc limit %s""",
             (project_id, limit),
         )
     ).fetchall()
-    return [RunOut.model_validate(row) for row in rows]
+    return [RunSummary.model_validate(row) for row in rows]
 
 
 async def cancel_run(conn: Conn, user_id: str, run_id: UUID) -> RunOut:

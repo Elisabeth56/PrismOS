@@ -11,6 +11,8 @@ const publicSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: withLocalDefault('http://127.0.0.1:54321').pipe(z.string().url()),
   // the publishable (anon) key; safe in the browser because RLS decides what it can read
   NEXT_PUBLIC_SUPABASE_ANON_KEY: withLocalDefault('local-anon-key'),
+  // the GitHub App's URL name, for the "Install the GitHub App" link
+  NEXT_PUBLIC_GITHUB_APP_SLUG: z.string().min(1).default('prismos-app'),
 })
 
 // Next inlines NEXT_PUBLIC_ values at build time, so each one is read by its full name
@@ -18,6 +20,7 @@ const parsed = publicSchema.safeParse({
   NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || undefined,
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || undefined,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || undefined,
+  NEXT_PUBLIC_GITHUB_APP_SLUG: process.env.NEXT_PUBLIC_GITHUB_APP_SLUG || undefined,
 })
 
 if (!parsed.success) {

@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
 
 import { Button } from '@/components/ui'
+import { safeNext } from '@/lib/safe-next'
 import { createClient } from '@/lib/supabase/client'
 
 function SignIn() {
@@ -13,7 +14,7 @@ function SignIn() {
 
   async function signInWithGitHub() {
     setPending(true)
-    const next = params.get('next') ?? '/dashboard'
+    const next = safeNext(params.get('next'))
     const { error } = await createClient().auth.signInWithOAuth({
       provider: 'github',
       // the App's OAuth credentials back this provider, so the token can list the user's installations
