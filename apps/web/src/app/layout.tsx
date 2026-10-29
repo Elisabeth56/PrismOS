@@ -1,33 +1,32 @@
-// src/app/layout.tsx
-import type { Metadata } from 'next'
-import './globals.css'
-import { Syne, Inter } from 'next/font/google'
+import { GeistMono } from 'geist/font/mono'
+import { GeistSans } from 'geist/font/sans'
+import type { Metadata, Viewport } from 'next'
 
-const syne = Syne({ subsets: ['latin'], variable: '--font-syne', weight: ['700','800'] })
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+import { themeScript } from '@/lib/theme'
+
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'PrismOS — Autonomous Feature Delivery',
+  title: { default: 'PrismOS', template: '%s · PrismOS' },
   description:
-    'PrismOS is an AI operating system that orchestrates 7 specialized agents to ship features into your existing product. Context-aware, conflict-resolving, production-ready.',
-  keywords: ['AI agents', 'software delivery', 'autonomous engineering', 'Qwen', 'multi-agent'],
-  openGraph: {
-    title: 'PrismOS',
-    description: 'Ship features with a full AI engineering team.',
-    type: 'website',
-  },
+    'Describe a feature for your GitHub repo. Three critics review the plan, real disagreements get settled, and you approve the pull request before it opens.',
+  openGraph: { title: 'PrismOS', description: 'One request in. One reviewed pull request out.', type: 'website' },
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#141315' },
+    { media: '(prefers-color-scheme: light)', color: '#f4f2ef' },
+  ],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${syne.variable} ${inter.variable} font-sans bg-black text-white antialiased overflow-x-hidden`}>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   )
 }

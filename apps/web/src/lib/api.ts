@@ -1,291 +1,144 @@
-// src/lib/api.ts
-// Centralised API client for PrismOS backend.
-
-import type {
-  FeatureClassification,
-  ContextInput,
-  Session,
-  Project,
-  MemoryEntry,
-} from './types'
+// Typed client for the PrismOS API. Every call sends the Supabase session as a bearer token, and every
+// failure comes back as the API's shared error shape: {"error": {"code", "message", "details"}}.
 import { env } from './env'
 import { createClient } from './supabase/client'
-import { getSessionToken } from './useSessionToken'
 
 export const API_BASE = env.NEXT_PUBLIC_API_BASE_URL
 
-// ---------------------------------------------------------------------------
-// Generic helpers
-// ---------------------------------------------------------------------------
+export type RunStatus = 'queued' | 'running' | 'awaiting_approval' | 'pr_opened' | 'failed' | 'cancelled'
+export type Critic = 'architect' | 'security' | 'ux'
 
-interface ApiOk<T> {
-  ok: true
-  data: T
-}
-
-interface ApiErr {
-  ok: false
-  error: string
-}
-
-type ApiResult<T> = ApiOk<T> | ApiErr
-
-async function request<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<ApiResult<T>> {
-  try {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    }
-
-    // signed-in requests carry the Supabase access token; the API verifies it on every call
-    if (typeof window !== 'undefined') {
-      const { data } = await createClient().auth.getSession()
-      if (data.session) headers['Authorization'] = `Bearer ${data.session.access_token}`
-    }
-
-    // pre-remodel endpoints still read the anonymous token; removed with them in #9
-    const token = getSessionToken()
-    if (token) {
-      headers['X-Session-Token'] = token
-    }
-
-    const timestamp = new Date().getTime()
-    const separator = path.includes('?') ? '&' : '?'
-    const finalUrl = `${API_BASE}${path}${separator}_t=${timestamp}`
-
-    const res = await fetch(finalUrl, {
-      headers,
-      cache: 'no-store',
-      ...init,
-    })
-    if (!res.ok) {
-      const text = await res.text().catch(() => res.statusText)
-      return { ok: false, error: text }
-    }
-    const data = (await res.json()) as T
-    return { ok: true, data }
-  } catch (err) {
-    return { ok: false, error: (err as Error).message }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// POST /api/v1/runs — Start a new agent run
-// ---------------------------------------------------------------------------
-
-export interface CreateRunPayload {
-  project_id?: string
-  feature_request: string
-  feature_classification: FeatureClassification
-  context_inputs: ContextInput
-}
-
-export interface CreateRunResponse {
-  session_id: string
-  stream_url: string
-}
-
-export async function createRun(
-  payload: CreateRunPayload,
-): Promise<ApiResult<CreateRunResponse>> {
-  return request<CreateRunResponse>('/runs', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
-// ---------------------------------------------------------------------------
-// PUT /api/v1/projects/{id} — Update project settings
-// ---------------------------------------------------------------------------
-
-export interface UpdateProjectPayload {
-  name: string
-  description: string
-}
-
-export interface UpdateProjectResponse {
+export interface Project {
   id: string
   name: string
-  description: string
+  repo_full_name: string
+  default_branch: string
+  role: 'owner' | 'member'
+  created_at: string
+  last_run_at: string | null
 }
 
-export async function updateProject(
-  projectId: string,
-  payload: UpdateProjectPayload,
-): Promise<ApiResult<UpdateProjectResponse>> {
-  return request<UpdateProjectResponse>(`/projects/${projectId}`, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  })
-}
-
-export async function deleteProject(projectId: string): Promise<ApiResult<{ success: boolean }>> {
-  return request<{ success: boolean }>(`/projects/${projectId}`, {
-    method: 'DELETE',
-  })
-}
-
-// ---------------------------------------------------------------------------
-// POST /api/v1/projects — Create a new project
-// ---------------------------------------------------------------------------
-
-export interface CreateProjectPayload {
-  name: string
-  description: string
-}
-
-export interface CreateProjectResponse {
+export interface Run {
   id: string
-  name: string
-  description: string
-}
-
-export async function createProject(
-  payload: CreateProjectPayload,
-): Promise<ApiResult<CreateProjectResponse>> {
-  return request<CreateProjectResponse>('/projects', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
-// ---------------------------------------------------------------------------
-// POST /api/v1/waitlist — Join the waitlist
-// ---------------------------------------------------------------------------
-
-export interface JoinWaitlistPayload {
-  email: string
-  name?: string
-}
-
-export interface JoinWaitlistResponse {
-  success: boolean
-}
-
-export async function joinWaitlist(
-  payload: JoinWaitlistPayload,
-): Promise<ApiResult<JoinWaitlistResponse>> {
-  return request<JoinWaitlistResponse>('/waitlist', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-}
-
-// ---------------------------------------------------------------------------
-// GET /api/v1/sessions — List past sessions
-// ---------------------------------------------------------------------------
-
-export interface SessionListResponse {
-  sessions: Session[]
-}
-
-export async function getSessions(projectId?: string): Promise<ApiResult<SessionListResponse>> {
-  const url = projectId ? `/sessions?project_id=${projectId}` : '/sessions'
-  return request<SessionListResponse>(url)
-}
-
-export async function deleteSession(sessionId: string): Promise<ApiResult<{ success: boolean }>> {
-  return request<{ success: boolean }>(`/sessions/${sessionId}`, {
-    method: 'DELETE',
-  })
-}
-
-// ---------------------------------------------------------------------------
-// GET /api/v1/sessions/{id} — Full session detail
-// ---------------------------------------------------------------------------
-
-export interface SessionDetailResponse {
-  id: string
-  feature_request: string
-  feature_classification: FeatureClassification | null
-  product_context: {
-    product_type: string
-    core_existing_features: string[]
-    frontend_stack: string
-    backend_stack: string
-    database_models: string[]
-    current_api_routes: string[]
-    constraints_and_risks: string[]
-    raw_analysis: string
-  } | null
-  intake: { step: number; output: string; created_at: string } | null
-  prd: { step: number; output: string; created_at: string } | null
-  architect_response: { step: number; output: string; created_at: string } | null
-  uiux_response: { step: number; output: string; created_at: string } | null
-  engineer_response: { step: number; output: string; created_at: string } | null
-  qa_response: { step: number; output: string; created_at: string } | null
-  conflicts: {
-    conflict_id: string
-    agents_involved: string[]
-    summary: string
-    resolution: string
-    rationale: string
-  }[]
-  final_package: { step: number; output: string; created_at: string } | null
-  benchmark: {
-    baseline_output: string | null
-    metrics: {
-      requirement_coverage: { baseline: number; prismos: number }
-      conflict_count: number
-      edge_cases_handled: { baseline: number; prismos: number }
-      verdict_clarity: { baseline: boolean; prismos: boolean }
-    }
-  } | null
-}
-
-export async function getSession(
-  sessionId: string,
-): Promise<ApiResult<SessionDetailResponse>> {
-  return request<SessionDetailResponse>(`/sessions/${sessionId}`)
-}
-
-// ---------------------------------------------------------------------------
-// GET /api/v1/benchmark/{sessionId} — Benchmark comparison data
-// ---------------------------------------------------------------------------
-
-export interface BenchmarkResponse {
-  session_id: string
-  baseline_output: string
-  metrics: {
-    requirement_coverage: { baseline: number; prismos: number }
-    conflict_count: number
-    edge_cases_handled: { baseline: number; prismos: number }
-    verdict_clarity: { baseline: boolean; prismos: boolean }
-  }
-}
-
-export async function getBenchmark(
-  sessionId: string,
-): Promise<ApiResult<BenchmarkResponse>> {
-  return request<BenchmarkResponse>(`/benchmark/${sessionId}`)
-}
-
-// ---------------------------------------------------------------------------
-// GET /api/v1/projects — List all projects
-// ---------------------------------------------------------------------------
-
-export interface ProjectListResponse {
-  projects: Project[]
-}
-
-export async function getProjects(): Promise<ApiResult<ProjectListResponse>> {
-  return request<ProjectListResponse>('/projects')
-}
-
-// ---------------------------------------------------------------------------
-// GET /api/v1/projects/{id}/memory — Project memory entries
-// ---------------------------------------------------------------------------
-
-export interface ProjectMemoryResponse {
   project_id: string
-  entry_count: number
-  entries: MemoryEntry[]
+  feature_request: string
+  base_branch: string
+  status: RunStatus
+  current_step: string | null
+  verdict: 'verified' | 'needs_revision' | null
+  pr_url: string | null
+  pr_number: number | null
+  error: { code: string; message: string; step?: string | null } | null
+  tokens_in: number
+  tokens_out: number
+  created_at: string
+  started_at: string | null
+  finished_at: string | null
 }
 
-export async function getProjectMemory(
-  projectId: string,
-): Promise<ApiResult<ProjectMemoryResponse>> {
-  return request<ProjectMemoryResponse>(`/projects/${projectId}/memory`)
+export interface Objection {
+  critic: Critic
+  item_id: string
+  severity: 'minor' | 'major' | 'blocking'
+  concern: string
+  proposed_change: string
+}
+
+export interface Conflict {
+  id: string
+  label: string
+  item_id: string
+  kind: 'contested' | 'blocking'
+  objections: Objection[]
+  ruling: string | null
+  rationale: string | null
+  owner: string | null
+}
+
+export interface Change {
+  path: string
+  action: 'create' | 'modify' | 'delete'
+  content: string | null
+}
+
+export interface RunDetail extends Run {
+  /** Latest stored output per pipeline step, keyed by step name (plan, critic_ux, build, verify...). */
+  steps: Record<string, unknown>
+  conflicts: Conflict[]
+  changes: Change[]
+}
+
+export interface InstalledRepo {
+  installation_id: number
+  full_name: string
+  default_branch: string
+  private: boolean
+}
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public code: string,
+    message: string,
+  ) {
+    super(message)
+  }
+}
+
+async function session() {
+  const { data } = await createClient().auth.getSession()
+  return data.session
+}
+
+async function request<T>(path: string, init: RequestInit & { github?: boolean } = {}): Promise<T> {
+  const current = await session()
+  if (!current) throw new ApiError(401, 'not_signed_in', 'Sign in to continue.')
+  const headers = new Headers(init.headers)
+  headers.set('Authorization', `Bearer ${current.access_token}`)
+  if (init.body) headers.set('Content-Type', 'application/json')
+  if (init.github) {
+    // the user's GitHub token proves which installations they can reach (ADR-001); it's never stored
+    if (!current.provider_token) {
+      throw new ApiError(400, 'github_token_missing', 'Sign in with GitHub again so PrismOS can see your repositories.')
+    }
+    headers.set('X-GitHub-Token', current.provider_token)
+  }
+
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE}${path}`, { ...init, headers, cache: 'no-store' })
+  } catch {
+    // the free API host sleeps when idle; the first request after that can take ~30s or fail outright
+    throw new ApiError(0, 'api_unreachable', "Can't reach the PrismOS server. It may be waking up; try again in a moment.")
+  }
+  if (response.ok) return response.json() as Promise<T>
+  const body = await response.json().catch(() => null)
+  throw new ApiError(
+    response.status,
+    body?.error?.code ?? 'unknown',
+    body?.error?.message ?? 'Something went wrong. Try again.',
+  )
+}
+
+export const api = {
+  projects: () => request<Project[]>('/projects'),
+  project: (id: string) => request<Project>(`/projects/${id}`),
+  installedRepos: () => request<InstalledRepo[]>('/github/repositories', { github: true }),
+  attachRepo: (repo: InstalledRepo) =>
+    request<Project>('/projects', {
+      method: 'POST',
+      github: true,
+      body: JSON.stringify({ installation_id: repo.installation_id, repo_full_name: repo.full_name }),
+    }),
+  runs: (projectId: string) => request<Run[]>(`/projects/${projectId}/runs`),
+  run: (id: string) => request<RunDetail>(`/runs/${id}`),
+  startRun: (body: {
+    project_id: string
+    feature_request: string
+    base_branch?: string
+    context_files?: { name: string; content: string }[]
+  }) => request<Run>('/runs', { method: 'POST', body: JSON.stringify(body) }),
+  cancel: (id: string) => request<Run>(`/runs/${id}/cancel`, { method: 'POST' }),
+  retry: (id: string) => request<Run>(`/runs/${id}/retry`, { method: 'POST' }),
+  approve: (id: string) => request<RunDetail>(`/runs/${id}/approve`, { method: 'POST' }),
 }
