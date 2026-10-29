@@ -10,19 +10,45 @@ from app.database import Conn
 from app.pipeline.outputs import FileChange, VerifierOutput
 from app.pipeline.review import Conflict, Decision
 
-MEMORY_LIMIT = 10
+MEMORY_PER_KIND = 8
+MEMORY_CHARS = 8_000  # about 2K tokens of the planner's budget
+REMEMBER = "insert into memory_entries (project_id, run_id, kind, title, content)"
 
 
 async def load_memory(conn: Conn, project_id: str) -> list[dict[str, str]]:
-    """The project's most recent decisions and shipped features, newest first."""
+    """The latest entries of each kind, newest first, trimmed to the memory budget."""
     rows = await (
         await conn.execute(
-            """select kind, title, content from memory_entries where project_id = %s
-               order by created_at desc limit %s""",
-            (project_id, MEMORY_LIMIT),
+            """select kind, title, content from (
+                 select kind, title, content, created_at,
+                        row_number() over (partition by kind order by created_at desc) as n
+                 from memory_entries where project_id = %s
+               ) latest where n <= %s order by created_at desc""",
+            (project_id, MEMORY_PER_KIND),
         )
     ).fetchall()
-    return [dict(row) for row in rows]
+    entries, used = [], 0
+    for row in rows:
+        used += len(row["title"]) + len(row["content"])
+        if used > MEMORY_CHARS:
+            break
+        entries.append(dict(row))
+    return entries
+
+
+async def remember_shipped(
+    conn: Conn, project_id: str, run_id: str, title: str, summary: str, decisions: list[tuple[str, str]]
+) -> None:
+    """What the next run on this project should know: the feature that shipped and the rulings behind it."""
+    await conn.execute(
+        f"{REMEMBER} values (%s, %s, 'shipped_feature', %s, %s)",
+        (project_id, run_id, title, summary),
+    )
+    for ruling, rationale in decisions:
+        await conn.execute(
+            f"{REMEMBER} values (%s, %s, 'decision', %s, %s)",
+            (project_id, run_id, ruling, rationale),
+        )
 
 
 async def save_conflicts(conn: Conn, run_id: str, conflicts: list[Conflict]) -> None:
