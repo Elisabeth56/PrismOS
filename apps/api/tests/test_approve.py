@@ -173,3 +173,13 @@ def test_someone_elses_run_is_not_found(client, migrated_db_url):
 def test_titles_are_one_line_and_short():
     assert pr_title("Add  rate\nlimiting") == "Add rate limiting"
     assert len(pr_title("x" * 200)) == 72
+
+
+def test_an_opened_pr_is_remembered_for_the_next_run(client, migrated_db_url):
+    user, run = ready_run(migrated_db_url)
+
+    approve(client, user, run)
+
+    with psycopg.connect(migrated_db_url) as conn:
+        rows = conn.execute("select kind, content from memory_entries where run_id = %s", (run,)).fetchall()
+    assert rows == [("shipped_feature", "Did the thing.")]
