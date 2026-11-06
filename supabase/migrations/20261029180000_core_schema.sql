@@ -95,7 +95,7 @@ create table public.conflicts (
   id uuid primary key default gen_random_uuid(),
   run_id uuid not null references public.runs (id) on delete cascade,
   item_id text not null,
-  kind text not null check (kind in ('incompatible', 'blocking')),
+  kind text not null check (kind in ('contested', 'blocking')),
   objections jsonb not null,
   created_at timestamptz not null default now()
 );

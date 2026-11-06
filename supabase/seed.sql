@@ -40,7 +40,7 @@ begin
     (run, 'verify', '{"verdict": "verified", "items_checked": ["1","2","3","4","5","6"], "failures": []}', 'gemini-flash');
 
   insert into public.conflicts (id, run_id, item_id, kind, objections) values
-    (conflict, run, '3', 'incompatible', '[
+    (conflict, run, '3', 'contested', '[
       {"critic": "architect", "item_id": "3", "severity": "major",
        "proposed_change": "Move the limit into middleware on the auth router so every login route shares it."},
       {"critic": "security", "item_id": "3", "severity": "blocking",
