@@ -9,6 +9,7 @@ import pytest
 
 TEST_ENV = {
     "APP_ENV": "test",
+    "RUN_WORKER": "false",
     "GEMINI_API_KEY": "test-gemini-key",
     "GROQ_API_KEY": "test-groq-key",
     "SUPABASE_URL": "http://localhost:54321",

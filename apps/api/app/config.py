@@ -37,8 +37,17 @@ class Settings(BaseSettings):
     APP_ENV: Literal["development", "test", "production"] = "development"
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
-    MAX_FILE_SIZE_BYTES: int = Field(default=500 * 1024, gt=0)
-    MAX_FILE_COUNT: int = Field(default=5, gt=0)
+    MAX_FILE_SIZE_BYTES: int = Field(default=100 * 1024, gt=0)
+    MAX_FILE_COUNT: int = Field(default=5, gt=0, le=5)
+
+    # run queue and worker (ADR-004)
+    RUN_WORKER: bool = True  # off in tests and for API-only processes
+    RUNS_PER_HOUR: int = Field(default=10, gt=0)
+    MAX_ACTIVE_RUNS: int = Field(default=2, gt=0)
+    WORKER_POLL_SECONDS: float = Field(default=2.0, gt=0)
+    HEARTBEAT_SECONDS: float = Field(default=15.0, gt=0)
+    STALE_RUN_SECONDS: float = Field(default=90.0, gt=0)
+    MAX_RUN_ATTEMPTS: int = Field(default=3, gt=0)
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
