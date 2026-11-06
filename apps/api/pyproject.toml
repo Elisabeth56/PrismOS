@@ -11,8 +11,9 @@ dependencies = [
   "python-multipart>=0.0.18",
   "langgraph>=0.3",
   "openai>=1.60",
-  "supabase>=2.12",
   "httpx>=0.28",
+  "pyjwt[crypto]>=2.10",
+  "psycopg[binary,pool]>=3.2",
 ]
 
 [dependency-groups]
@@ -21,6 +22,7 @@ dev = [
   "pytest-asyncio>=0.25",
   "ruff>=0.9",
   "pyright>=1.1.390",
+  "psycopg[binary]>=3.2",
 ]
 
 [tool.ruff]
@@ -29,6 +31,14 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency injection is declared in default arguments by design
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Header", "fastapi.Query", "fastapi.Path"]
+
+[tool.ruff.lint.per-file-ignores]
+# long prompt strings; prompts move to ai/prompts/*.md in #8
+"app/agents/*.py" = ["E501"]
 
 [tool.pyright]
 include = ["app", "tests"]
@@ -39,3 +49,4 @@ venv = ".venv"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

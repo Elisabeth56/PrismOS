@@ -1,43 +1,32 @@
-'use client'
-// REPLACES: src/app/page.tsx
+import { CriticsBand } from '@/components/landing/critics-band'
+import { DemoRun } from '@/components/landing/demo-run'
+import { HeroCopy } from '@/components/landing/hero-copy'
+import { PrismHero } from '@/components/landing/prism-hero'
+import { FinalCta, Footer, Safety } from '@/components/landing/sections'
+import { StartShortcut } from '@/components/landing/shortcut'
+import { Steps } from '@/components/landing/steps'
+import { FloatingStart, TopBar } from '@/components/landing/top-bar'
 
-import { useState } from 'react'
-import Navbar from '@/components/landing/Navbar'
-import HeroSection from '@/components/landing/HeroSection'
-import ProductShowcase from '@/components/landing/ProductShowcase'
-import LogoStrip from '@/components/landing/LogoStrip'
-import FeaturesSection from '@/components/landing/FeaturesSection'
-import AgentsSection from '@/components/landing/AgentsSection'
-import KickstartSection from '@/components/landing/KickstartSection'
-import BenchmarkSection from '@/components/landing/BenchmarkSection'
-import PricingSection from '@/components/landing/PricingSection'
-import FinalCTASection from '@/components/landing/FinalCTASection'
-import Footer from '@/components/landing/Footer'
-import WaitlistModal from '@/components/shared/WaitlistModal'
-import DemoVideoModal from '@/components/shared/DemoVideoModal'
+import '@/components/landing/landing.css'
 
-export default function LandingPage() {
-  const [waitlistOpen, setWaitlistOpen] = useState(false)
-  const [demoVideoOpen, setDemoVideoOpen] = useState(false)
-
+export default function Landing() {
   return (
-    <main className="relative bg-black min-h-screen">
-      <Navbar onWaitlist={() => setWaitlistOpen(true)} />
-      <HeroSection
-        onWaitlist={() => setWaitlistOpen(true)}
-        onWatchDemo={() => setDemoVideoOpen(true)}
-      />
-      <ProductShowcase />
-      <LogoStrip />
-      <FeaturesSection />
-      <AgentsSection />
-      <KickstartSection />
-      <BenchmarkSection />
-      <PricingSection onWaitlist={() => setWaitlistOpen(true)} />
-      <FinalCTASection onWaitlist={() => setWaitlistOpen(true)} />
-      <Footer onWatchDemo={() => setDemoVideoOpen(true)} />
-      <WaitlistModal open={waitlistOpen} onClose={() => setWaitlistOpen(false)} />
-      <DemoVideoModal open={demoVideoOpen} onClose={() => setDemoVideoOpen(false)} />
-    </main>
+    <div className="overflow-x-hidden">
+      <TopBar />
+      <main>
+        <section id="top" className="mx-auto flex max-w-[1240px] flex-col gap-2 pt-6 sm:gap-6 sm:px-6 sm:pt-14 lg:flex-row lg:items-center">
+          <HeroCopy />
+          <PrismHero />
+        </section>
+        <DemoRun />
+        <Steps />
+        <CriticsBand />
+        <Safety />
+        <FinalCta />
+      </main>
+      <Footer />
+      <FloatingStart />
+      <StartShortcut />
+    </div>
   )
 }

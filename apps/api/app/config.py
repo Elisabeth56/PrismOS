@@ -1,61 +1,77 @@
-# backend/config.py
-"""
-Centralised settings loaded from environment variables / .env file.
-Uses pydantic-settings for validation and type coercion.
-"""
+"""Typed settings for the API, read from the environment or apps/api/.env and validated at startup."""
 
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import List
+from typing import Annotated, Literal
 
-from pydantic_settings import BaseSettings
+from pydantic import Field, HttpUrl, SecretStr, ValidationError, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """All PrismOS backend configuration lives here."""
+    """All API configuration. Fields without a default are required."""
 
-    # ── Qwen Cloud API ───────────────────────────────────────────────────
-    QWEN_API_KEY: str = ""
-    QWEN_API_BASE: str = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
-    QWEN_REASONING_MODEL: str = "qwen3.7-plus"
-    QWEN_CODER_MODEL: str = "qwen3-coder-plus"
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore")
 
-    # ── Supabase ─────────────────────────────────────────────────────────
-    SUPABASE_URL: str = ""
-    SUPABASE_SERVICE_ROLE_KEY: str = ""
+    # LLM providers (ADR-002): Gemini for large calls, Groq for small fast ones.
+    # Free-tier model ids change; check them when deploying and override here.
+    GEMINI_API_KEY: SecretStr
+    GROQ_API_KEY: SecretStr
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_FALLBACK_MODEL: str = "gemini-2.5-flash-lite"
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
+    LLM_TIMEOUT_SECONDS: float = Field(default=90, gt=0)
 
-    # ── GitHub (public repo reads) ───────────────────────────────────────
-    GITHUB_TOKEN: str = ""
+    SUPABASE_URL: HttpUrl
+    SUPABASE_SERVICE_ROLE_KEY: SecretStr
+    # direct Postgres connection (Supabase session pooler on IPv4 hosts); queries are scoped by membership in SQL
+    DATABASE_URL: SecretStr
+    # only for projects still on Supabase's legacy HS256 JWT secret; newer projects verify against the JWKS
+    SUPABASE_JWT_SECRET: SecretStr | None = None
 
-    # ── CORS ─────────────────────────────────────────────────────────────
-    CORS_ORIGINS: str = "https://prismos.app,http://localhost:3000,http://127.0.0.1:3000"
+    # the PrismOS GitHub App (ADR-001); without it, projects can only read public repos
+    GITHUB_APP_ID: str | None = None
+    # PEM contents; "\n" escapes are accepted so the key fits in one env var
+    GITHUB_APP_PRIVATE_KEY: SecretStr | None = None
+    # optional: raises GitHub's rate limit for public repo reads when no App is configured
+    GITHUB_TOKEN: SecretStr | None = None
 
-    # ── App ──────────────────────────────────────────────────────────────
-    APP_ENV: str = "development"  # development | staging | production
-    LOG_LEVEL: str = "INFO"
+    CORS_ORIGINS: Annotated[list[str], NoDecode] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    APP_ENV: Literal["development", "test", "production"] = "development"
+    LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
-    # ── File upload limits (hackathon) ───────────────────────────────────
-    MAX_FILE_SIZE_BYTES: int = 500 * 1024  # 500 KB per file
-    MAX_FILE_COUNT: int = 5
+    MAX_FILE_SIZE_BYTES: int = Field(default=100 * 1024, gt=0)
+    MAX_FILE_COUNT: int = Field(default=5, gt=0, le=5)
 
-    @property
-    def cors_origins_list(self) -> List[str]:
-        """Parse comma-separated CORS origins into a list."""
-        return [o.strip().strip('"').strip("'") for o in self.CORS_ORIGINS.split(",") if o.strip()]
+    # run queue and worker (ADR-004)
+    RUN_WORKER: bool = True  # off in tests and for API-only processes
+    RUNS_PER_HOUR: int = Field(default=10, gt=0)
+    MAX_ACTIVE_RUNS: int = Field(default=2, gt=0)
+    WORKER_POLL_SECONDS: float = Field(default=2.0, gt=0)
+    HEARTBEAT_SECONDS: float = Field(default=15.0, gt=0)
+    STALE_RUN_SECONDS: float = Field(default=90.0, gt=0)
+    MAX_RUN_ATTEMPTS: int = Field(default=3, gt=0)
 
-    @property
-    def is_production(self) -> bool:
-        return self.APP_ENV == "production"
-
-    model_config = {
-        "env_file": (".env", ".env.local"),
-        "env_file_encoding": "utf-8",
-        "case_sensitive": True,
-    }
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def split_origins(cls, value: object) -> object:
+        """Accept a comma-separated string so hosts can set one plain env var."""
+        if isinstance(value, str):
+            return [o.strip().strip("\"'") for o in value.split(",") if o.strip()]
+        return value
 
 
-@lru_cache()
+def missing_settings_message(error: ValidationError) -> str:
+    """Turns a settings validation error into one line naming every bad variable."""
+    problems = [f"{'.'.join(str(p) for p in e['loc'])} ({e['msg'].lower()})" for e in error.errors()]
+    return "Invalid or missing environment variables: " + ", ".join(problems) + ". See apps/api/.env.example."
+
+
+@lru_cache
 def get_settings() -> Settings:
-    """Cached singleton — call this instead of constructing Settings() directly."""
-    return Settings()
+    """Cached settings; exits with a readable message when the environment is incomplete."""
+    try:
+        return Settings()  # pyright: ignore[reportCallIssue]
+    except ValidationError as error:
+        raise SystemExit(missing_settings_message(error)) from None
