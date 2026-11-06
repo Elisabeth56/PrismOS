@@ -140,11 +140,11 @@ export const api = {
   removeProject: (id: string) => request<void>(`/projects/${id}`, { method: 'DELETE' }),
   activity: (id: string) => request<ActivityItem[]>(`/projects/${id}/activity`),
   installedRepos: () => request<InstalledRepo[]>('/repositories', { github: true }),
-  attachRepo: (repo: InstalledRepo) =>
+  createProject: (repo: InstalledRepo, details: { name?: string; default_branch?: string } = {}) =>
     request<Project>('/projects', {
       method: 'POST',
       github: true,
-      body: JSON.stringify({ installation_id: repo.installation_id, repo_full_name: repo.full_name }),
+      body: JSON.stringify({ installation_id: repo.installation_id, repo_full_name: repo.full_name, ...details }),
     }),
   runs: (projectId: string) => request<RunSummary[]>(`/projects/${projectId}/runs`),
   run: (id: string) => request<RunDetail>(`/runs/${id}`),

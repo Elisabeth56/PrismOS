@@ -70,7 +70,7 @@ async def create_project(conn: Conn, user_id: str, body: ProjectCreate, reachabl
                 (
                     body.name or match.full_name.split("/")[1],
                     match.full_name,
-                    match.default_branch,
+                    body.default_branch or match.default_branch,
                     match.installation_id,
                     user_id,
                 ),

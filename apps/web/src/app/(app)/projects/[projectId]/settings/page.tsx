@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
+import { DeleteProjectDialog } from '@/components/app/project-dialogs'
 import { useProject } from '@/components/app/project-context'
 import { Button } from '@/components/ui'
 import { api, ApiError } from '@/lib/api'
@@ -21,8 +22,7 @@ export default function ProjectSettings() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
-  const [confirmRemove, setConfirmRemove] = useState('')
-  const [removing, setRemoving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const changed = name.trim() !== project.name || branch.trim() !== project.default_branch
 
@@ -41,19 +41,6 @@ export default function ProjectSettings() {
       setError(e instanceof ApiError ? e.message : 'Something went wrong. Try again.')
     } finally {
       setSaving(false)
-    }
-  }
-
-  async function remove() {
-    setRemoving(true)
-    try {
-      await api.removeProject(project.id)
-      announceProjectsChanged()
-      router.push('/projects')
-      router.refresh()
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Something went wrong. Try again.')
-      setRemoving(false)
     }
   }
 
@@ -129,24 +116,25 @@ export default function ProjectSettings() {
       </section>
 
       {owner && (
-        <section className="flex flex-col gap-4 rounded-[16px] border border-[color-mix(in_srgb,var(--oxblood-text)_35%,transparent)] p-6">
-          <h2 className="text-title-3 font-medium">Remove project</h2>
-          <p className="text-ink-2">
-            Deletes this project and its run history from PrismOS. Your repository and any pull requests already
-            opened stay exactly as they are on GitHub.
-          </p>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="confirm" className={label}>
-              Type <span className="font-mono text-ink">{project.name}</span> to confirm
-            </label>
-            <input id="confirm" className={field} value={confirmRemove} onChange={(e) => setConfirmRemove(e.target.value)} autoComplete="off" />
+        <section className="flex flex-wrap items-center justify-between gap-4 rounded-[16px] border border-[color-mix(in_srgb,var(--oxblood-text)_35%,transparent)] p-6">
+          <div className="flex max-w-[460px] flex-col gap-1">
+            <h2 className="text-title-3 font-medium">Delete project</h2>
+            <p className="text-ink-2">
+              Removes the project and its run history from PrismOS. Nothing changes on GitHub.
+            </p>
           </div>
-          <div>
-            <Button onClick={remove} disabled={confirmRemove !== project.name || removing} className="!text-oxblood-text">
-              {removing ? 'Removing…' : 'Remove project'}
-            </Button>
-          </div>
+          <Button className="!text-oxblood-text" onClick={() => setDeleting(true)}>
+            Delete project
+          </Button>
         </section>
+      )}
+      {deleting && (
+        <DeleteProjectDialog
+          project={project}
+          open
+          onClose={() => setDeleting(false)}
+          onDeleted={() => router.push('/projects')}
+        />
       )}
     </div>
   )

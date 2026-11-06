@@ -18,6 +18,7 @@
   --ink-4: #5e5c61;
   --oxblood: #7a3a37;
   --oxblood-text: #d9908a;
+  --on-oxblood: #faf0ee;
   --action: #e4ada7;
   --on-action: #3b1513;
   --oxblood-wash: rgba(217, 144, 138, 0.12);
@@ -73,6 +74,7 @@
   --color-oxblood: var(--oxblood);
   --color-oxblood-text: var(--oxblood-text);
   --color-oxblood-wash: var(--oxblood-wash);
+  --color-on-oxblood: var(--on-oxblood);
   --color-action: var(--action);
   --color-on-action: var(--on-action);
   --color-architect: var(--critic-architect);
