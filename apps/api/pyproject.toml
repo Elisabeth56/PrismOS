@@ -21,6 +21,7 @@ dev = [
   "pytest-asyncio>=0.25",
   "ruff>=0.9",
   "pyright>=1.1.390",
+  "psycopg[binary]>=3.2",
 ]
 
 [tool.ruff]
