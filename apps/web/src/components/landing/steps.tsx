@@ -1,18 +1,20 @@
 'use client'
 
 import { useInView, useReducedMotion, useTicker } from './hooks'
+import { BuildVisual, PlanVisual, ResolveVisual, ReviewVisual } from './step-visuals'
 
 const STEPS = [
-  { num: '1', title: 'Plan', body: 'Reads the files your change touches and writes a spec with numbered items.', color: 'var(--ink)', bar: 'var(--ink-2)' },
+  { num: '1', Visual: PlanVisual, title: 'Plan', body: 'Reads the files your change touches and writes a spec with numbered items.', color: 'var(--ink)', bar: 'var(--ink-2)' },
   {
     num: '2',
+    Visual: ReviewVisual,
     title: 'Review',
     body: 'Three critics review the same spec at once and object item by item.',
     color: 'var(--critic-security)',
     bar: 'linear-gradient(90deg, var(--critic-architect) 0 33.3%, var(--critic-security) 33.3% 66.6%, var(--critic-ux) 66.6% 100%)',
   },
-  { num: '3', title: 'Resolve', body: 'Where critics disagree on an item, a resolver rules and says why.', color: 'var(--oxblood-text)', bar: 'var(--oxblood-text)' },
-  { num: '4', title: 'Build and verify', body: 'Writes the change, checks it against the spec, then waits for you to open the PR.', color: 'var(--success)', bar: 'var(--success)' },
+  { num: '3', Visual: ResolveVisual, title: 'Resolve', body: 'Where critics disagree on an item, a resolver rules and says why.', color: 'var(--oxblood-text)', bar: 'var(--oxblood-text)' },
+  { num: '4', Visual: BuildVisual, title: 'Build and verify', body: 'Writes the change, checks it against the spec, then waits for you to open the PR.', color: 'var(--success)', bar: 'var(--success)' },
 ]
 
 export function Steps() {
@@ -34,11 +36,12 @@ export function Steps() {
         {STEPS.map((step, i) => (
           <li
             key={step.num}
-            className="lp-step relative flex flex-col gap-3 overflow-hidden rounded-[20px] bg-surface-1 px-6 pt-7 pb-8"
+            className="lp-step relative flex flex-col gap-3 overflow-hidden rounded-[20px] bg-surface-1 px-5 pt-5 pb-8"
             data-on={!reduced && i === active}
             style={{ '--c': step.color } as React.CSSProperties}
           >
-            <span className="lp-num text-[44px] leading-[44px] font-semibold tracking-[-0.04em] text-ink-4">{step.num}</span>
+            <step.Visual />
+            <span className="lp-num mt-2 text-[44px] leading-[44px] font-semibold tracking-[-0.04em] text-ink-4">{step.num}</span>
             <h3 className="text-[19px] leading-[26px] font-medium tracking-[-0.01em]">{step.title}</h3>
             <p className="text-ink-2">{step.body}</p>
             <span className="lp-bar absolute inset-x-0 bottom-0 h-1" style={{ background: step.bar }} />

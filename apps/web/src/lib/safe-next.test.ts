@@ -8,6 +8,6 @@ describe('safeNext', () => {
   })
 
   it.each(['//evil.com', '/\\evil.com', 'https://evil.com', '', null])('rejects %s', (value) => {
-    expect(safeNext(value)).toBe('/runs/new')
+    expect(safeNext(value)).toBe('/projects')
   })
 })

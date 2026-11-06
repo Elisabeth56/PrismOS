@@ -1,0 +1,1 @@
+postgresql://postgres:@/postgres?host=/var/tmp/prismos-pg

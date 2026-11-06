@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { use } from 'react'
 
 import { ErrorPanel, Skeleton } from '@/components/app/page-states'
+import { useProject } from '@/components/app/project-context'
 import { ButtonLink, StatusPill } from '@/components/ui'
 import { api, type RunSummary } from '@/lib/api'
 import { ago, shortId } from '@/lib/format'
@@ -24,9 +24,9 @@ function statusLabel(run: RunSummary) {
   return undefined
 }
 
-export default function RunHistory({ params }: { params: Promise<{ projectId: string }> }) {
-  const { projectId } = use(params)
-  const project = useApi(() => api.project(projectId), `project-${projectId}`)
+export default function RunHistory() {
+  const { project } = useProject()
+  const projectId = project.id
   const runs = useApi(() => api.runs(projectId), `runs-${projectId}`)
   const [filter, setFilter] = useStored<Filter>('prismos:run-filter', 'all')
 
@@ -34,23 +34,8 @@ export default function RunHistory({ params }: { params: Promise<{ projectId: st
   const shown = all.filter(FILTERS[filter]?.match ?? FILTERS.all.match)
   const waiting = all.filter(FILTERS.needs_you.match).length
 
-  if (project.error) return <div className="p-8"><ErrorPanel error={project.error} onRetry={project.reload} /></div>
-
   return (
     <div className="flex flex-col gap-6 px-4 py-8 sm:px-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          {project.data ? (
-            <span className="font-mono text-[12px] text-ink-3">{project.data.repo_full_name}</span>
-          ) : (
-            <Skeleton className="h-4 w-40" />
-          )}
-          <h1 className="text-title-1 font-semibold">Runs</h1>
-        </div>
-        <ButtonLink href="/runs/new" variant="primary" shortcut="⌘K">
-          Start a run
-        </ButtonLink>
-      </header>
 
       <div role="tablist" aria-label="Filter runs" className="inline-flex flex-wrap gap-1 self-start rounded-full bg-surface-1 p-1">
         {(Object.keys(FILTERS) as Filter[]).map((key) => (
@@ -81,7 +66,7 @@ export default function RunHistory({ params }: { params: Promise<{ projectId: st
           <h2 className="text-title-3 font-medium">No runs yet</h2>
           <p className="text-ink-2">Describe a feature for this repo and watch the critics review the plan.</p>
           <div>
-            <ButtonLink href="/runs/new" variant="primary">
+            <ButtonLink href={`/projects/${projectId}/runs/new`} variant="primary">
               Start the first run
             </ButtonLink>
           </div>

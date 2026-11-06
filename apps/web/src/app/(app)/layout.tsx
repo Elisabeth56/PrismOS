@@ -9,6 +9,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/sign-in')
-  const login = (user.user_metadata?.user_name as string | undefined) ?? user.email ?? 'you'
-  return <Shell login={login}>{children}</Shell>
+  const meta = user.user_metadata ?? {}
+  const account = {
+    login: (meta.user_name as string | undefined) ?? user.email ?? 'you',
+    name: (meta.full_name as string | undefined) ?? (meta.name as string | undefined) ?? null,
+    avatarUrl: (meta.avatar_url as string | undefined) ?? null,
+    email: user.email ?? null,
+    joinedAt: user.created_at,
+  }
+  return <Shell account={account}>{children}</Shell>
 }
