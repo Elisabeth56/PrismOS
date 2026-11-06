@@ -72,9 +72,9 @@ async def get_run(conn: Conn, user_id: str, run_id: UUID) -> RunDetail:
     ).fetchall()
     conflicts = await (
         await conn.execute(
-            """select c.id, c.item_id, c.kind, c.objections, d.ruling, d.rationale, d.owner
+            """select c.id, c.label, c.item_id, c.kind, c.objections, d.ruling, d.rationale, d.owner
                from conflicts c left join decisions d on d.conflict_id = c.id
-               where c.run_id = %s order by c.created_at, c.item_id""",
+               where c.run_id = %s order by length(c.label), c.label""",
             (run_id,),
         )
     ).fetchall()

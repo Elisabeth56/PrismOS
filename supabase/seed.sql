@@ -39,11 +39,13 @@ begin
       {"id": "6", "text": "Document the limit in the API README."}]}', 'gemini-flash'),
     (run, 'verify', '{"verdict": "verified", "items_checked": ["1","2","3","4","5","6"], "failures": []}', 'gemini-flash');
 
-  insert into public.conflicts (id, run_id, item_id, kind, objections) values
-    (conflict, run, '3', 'contested', '[
+  insert into public.conflicts (id, run_id, label, item_id, kind, objections) values
+    (conflict, run, 'c1', '3', 'contested', '[
       {"critic": "architect", "item_id": "3", "severity": "major",
+       "concern": "A per-route limiter leaves the other login routes open.",
        "proposed_change": "Move the limit into middleware on the auth router so every login route shares it."},
       {"critic": "security", "item_id": "3", "severity": "blocking",
+       "concern": "Limiting by IP alone is bypassed by rotating addresses.",
        "proposed_change": "Key by account as well as IP, or rotating addresses gets around it."}]');
 
   insert into public.decisions (conflict_id, run_id, ruling, rationale, owner) values

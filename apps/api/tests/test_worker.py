@@ -155,3 +155,13 @@ async def _noop(ctx: RunContext) -> None:
 
 async def _raise(error: Exception):
     raise error
+
+
+async def test_concurrent_events_get_distinct_ordered_seqs(pool, run_id, migrated_db_url):
+    ctx = RunContext(run={"id": run_id}, pool=pool)
+
+    await asyncio.gather(*(ctx.emit("tick", {"n": n}) for n in range(20)))
+
+    with psycopg.connect(migrated_db_url) as conn:
+        seqs = [r[0] for r in conn.execute("select seq from run_events where run_id = %s order by seq", (run_id,))]
+    assert seqs == list(range(1, 21))
