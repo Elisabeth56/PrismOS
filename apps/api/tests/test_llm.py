@@ -64,7 +64,7 @@ async def test_valid_output_is_parsed_and_usage_returned(provider):
     result, usage = await llm.generate([{"role": "user", "content": "check"}], Verdict)
 
     assert result == Verdict(**GOOD)
-    assert calls == ["gemini-2.5-flash"]
+    assert calls == ["gemini-3.5-flash"]
     assert (usage[0].tokens_in, usage[0].tokens_out) == (100, 20)
 
 
@@ -75,7 +75,7 @@ async def test_rate_limit_retries_once_then_falls_back_to_the_next_model(provide
     result, _ = await llm.generate([{"role": "user", "content": "check"}], Verdict)
 
     assert result.verdict == "verified"
-    assert calls == ["gemini-2.5-flash", "gemini-2.5-flash", "gemini-2.5-flash-lite"]
+    assert calls == ["gemini-3.5-flash", "gemini-3.5-flash", "gemini-2.5-flash-lite"]
 
 
 async def test_small_calls_go_to_groq_first(provider):
@@ -121,7 +121,7 @@ async def test_a_refusal_skips_that_provider_and_tries_the_next(provider):
 
     assert result.verdict == "verified"
     # not retried, and the other Gemini model is skipped: the refusal is about the account, not the model
-    assert calls == ["gemini-2.5-flash", "openai/gpt-oss-120b"]
+    assert calls == ["gemini-3.5-flash", "openai/gpt-oss-120b"]
 
 
 async def test_when_every_provider_refuses_the_reasons_are_kept(provider):
