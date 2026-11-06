@@ -1,7 +1,8 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 
 import { ErrorPanel, Skeleton } from '@/components/app/page-states'
 import { Button } from '@/components/ui'
@@ -14,24 +15,48 @@ const INSTALL_URL = `https://github.com/apps/${env.NEXT_PUBLIC_GITHUB_APP_SLUG}/
 /** Install the app on GitHub, come back, pick a repo. The API checks with GitHub that you can reach it. */
 export default function Connect() {
   const router = useRouter()
+  // GitHub sends people back here after installing, with the installation they just made
+  const installation = Number(useSearchParams().get('installation_id')) || null
   const repos = useApi(api.installedRepos, 'installed-repos')
   const projects = useApi(api.projects, 'projects')
   const [pending, setPending] = useState<string | null>(null)
   const [error, setError] = useState('')
 
   const attached = new Set(projects.data?.map((p) => p.repo_full_name.toLowerCase()))
+  const fresh = (repos.data ?? []).filter(
+    (r) => r.installation_id === installation && !attached.has(r.full_name.toLowerCase()),
+  )
+  const tokenExpired = repos.error?.code === 'github_token_missing' || repos.error?.code === 'github_token_expired'
 
   async function attach(repo: InstalledRepo) {
     setPending(repo.full_name)
     setError('')
     try {
-      const project = await api.attachRepo(repo)
-      router.push(`/projects/${project.id}`)
+      await api.attachRepo(repo)
+      // straight to the thing they came to do
+      router.push('/runs/new')
       router.refresh()
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Something went wrong. Try again.')
       setPending(null)
     }
+  }
+
+  // installed on exactly one new repo: add it without asking them to pick it again
+  const autoAttached = useRef(false)
+  useEffect(() => {
+    if (autoAttached.current || !projects.data || fresh.length !== 1) return
+    autoAttached.current = true
+    void attach(fresh[0])
+  })
+
+  if (installation && fresh.length === 1 && !error) {
+    return (
+      <div className="mx-auto flex max-w-[720px] flex-col gap-3 px-4 py-12 sm:px-6" aria-busy>
+        <h1 className="text-title-1 font-semibold">Adding {fresh[0].full_name}</h1>
+        <p className="text-ink-2">The app is installed. Setting up the project, then you can describe your first feature.</p>
+      </div>
+    )
   }
 
   return (
@@ -66,7 +91,17 @@ export default function Connect() {
           Repositories you can add
         </h2>
         {repos.loading && [0, 1, 2].map((i) => <Skeleton key={i} className="h-14 rounded-[12px]" />)}
-        {repos.error && <ErrorPanel error={repos.error} onRetry={repos.reload} />}
+        {repos.error && tokenExpired && (
+          <div role="alert" className="flex flex-col gap-3 rounded-[16px] bg-surface-1 p-6">
+            <p className="text-ink-2">{repos.error.message}</p>
+            <div>
+              <Link href="/sign-in?next=/projects/connect" className="px-btn px-btn--primary">
+                Sign in again
+              </Link>
+            </div>
+          </div>
+        )}
+        {repos.error && !tokenExpired && <ErrorPanel error={repos.error} onRetry={repos.reload} />}
         {repos.data?.length === 0 && (
           <p className="rounded-[12px] bg-surface-1 p-4 text-ink-2">
             No repositories yet. Install the app on GitHub, then refresh.

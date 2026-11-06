@@ -95,22 +95,19 @@ async function session() {
 }
 
 async function request<T>(path: string, init: RequestInit & { github?: boolean } = {}): Promise<T> {
-  const current = await session()
-  if (!current) throw new ApiError(401, 'not_signed_in', 'Sign in to continue.')
   const headers = new Headers(init.headers)
-  headers.set('Authorization', `Bearer ${current.access_token}`)
   if (init.body) headers.set('Content-Type', 'application/json')
-  if (init.github) {
-    // the user's GitHub token proves which installations they can reach (ADR-001); it's never stored
-    if (!current.provider_token) {
-      throw new ApiError(400, 'github_token_missing', 'Sign in with GitHub again so PrismOS can see your repositories.')
-    }
-    headers.set('X-GitHub-Token', current.provider_token)
+  // calls that need the user's GitHub token go through this app's server, which holds it (lib/github/token.ts)
+  const url = init.github ? `/api/github${path}` : `${API_BASE}${path}`
+  if (!init.github) {
+    const current = await session()
+    if (!current) throw new ApiError(401, 'not_signed_in', 'Sign in to continue.')
+    headers.set('Authorization', `Bearer ${current.access_token}`)
   }
 
   let response: Response
   try {
-    response = await fetch(`${API_BASE}${path}`, { ...init, headers, cache: 'no-store' })
+    response = await fetch(url, { ...init, headers, cache: 'no-store' })
   } catch {
     // the free API host sleeps when idle; the first request after that can take ~30s or fail outright
     throw new ApiError(0, 'api_unreachable', "Can't reach the PrismOS server. It may be waking up; try again in a moment.")
@@ -127,7 +124,7 @@ async function request<T>(path: string, init: RequestInit & { github?: boolean }
 export const api = {
   projects: () => request<Project[]>('/projects'),
   project: (id: string) => request<Project>(`/projects/${id}`),
-  installedRepos: () => request<InstalledRepo[]>('/github/repositories', { github: true }),
+  installedRepos: () => request<InstalledRepo[]>('/repositories', { github: true }),
   attachRepo: (repo: InstalledRepo) =>
     request<Project>('/projects', {
       method: 'POST',
