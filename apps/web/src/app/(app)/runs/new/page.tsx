@@ -17,7 +17,7 @@ export default function NewRunShortcut() {
   useEffect(() => {
     if (!projects.data || !loaded) return
     const target = projects.data.find((p) => p.id === lastProject) ?? projects.data[0]
-    router.replace(target ? `/projects/${target.id}/runs/new` : '/projects/connect')
+    router.replace(target ? `/projects/${target.id}/runs/new` : '/projects/new')
   }, [projects.data, loaded, lastProject, router])
 
   return (

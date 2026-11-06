@@ -120,7 +120,7 @@ export default function Profile() {
           >
             Manage repositories
           </a>
-          <ButtonLink href="/projects/connect">Add a repo</ButtonLink>
+          <ButtonLink href="/projects/new">New project</ButtonLink>
         </div>
       </section>
 

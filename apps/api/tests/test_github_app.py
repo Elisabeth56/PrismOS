@@ -108,6 +108,20 @@ def test_a_reachable_repo_becomes_a_project_owned_by_the_user(client, migrated_d
 
 
 @needs_db
+def test_a_project_can_be_created_with_its_own_name_and_branch(client, migrated_db_url):
+    repo = f"acme/notes-{uuid.uuid4().hex[:8]}"
+    app.dependency_overrides[github_transport] = lambda: github(repos=[repo])
+    body = {"installation_id": 7, "repo_full_name": repo, "name": " Notes API ", "default_branch": "develop"}
+
+    response = client.post(
+        "/api/v1/projects", json=body, headers={**bearer(make_user(migrated_db_url)), "X-GitHub-Token": "ghu_ok"}
+    )
+
+    assert response.status_code == 201
+    assert (response.json()["name"], response.json()["default_branch"]) == ("Notes API", "develop")
+
+
+@needs_db
 @pytest.mark.parametrize(
     ("kwargs", "status", "code"),
     [

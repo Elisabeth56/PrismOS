@@ -70,8 +70,8 @@ export function Shell({ account, children }: { account: Account; children: React
             </Link>
           )
         })}
-        <ButtonLink href="/projects/connect" size="sm" variant="ghost" className="mt-1 justify-start">
-          + Add a repo
+        <ButtonLink href="/projects/new" size="sm" variant="ghost" className="mt-1 justify-start">
+          + New project
         </ButtonLink>
       </nav>
       <div className="mt-auto flex flex-col gap-2">
