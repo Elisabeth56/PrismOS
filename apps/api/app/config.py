@@ -14,11 +14,14 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore")
 
-    # LLM provider; replaced by Gemini and Groq in #7
-    QWEN_API_KEY: SecretStr
-    QWEN_API_BASE: HttpUrl = HttpUrl("https://dashscope-intl.aliyuncs.com/compatible-mode/v1")
-    QWEN_REASONING_MODEL: str = "qwen3.7-plus"
-    QWEN_CODER_MODEL: str = "qwen3-coder-plus"
+    # LLM providers (ADR-002): Gemini for large calls, Groq for small fast ones.
+    # Free-tier model ids change; check them when deploying and override here.
+    GEMINI_API_KEY: SecretStr
+    GROQ_API_KEY: SecretStr
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_FALLBACK_MODEL: str = "gemini-2.5-flash-lite"
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
+    LLM_TIMEOUT_SECONDS: float = Field(default=90, gt=0)
 
     SUPABASE_URL: HttpUrl
     SUPABASE_SERVICE_ROLE_KEY: SecretStr

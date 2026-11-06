@@ -16,7 +16,6 @@ from app.agents.base import BaseAgent
 
 class EngineerAgent(BaseAgent):
     name = "engineer"
-    model_type = "coder"
     system_prompt = """You are the **Engineer Agent** for PrismOS.
 
 ## YOUR ROLE
