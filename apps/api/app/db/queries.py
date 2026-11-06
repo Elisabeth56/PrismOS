@@ -6,10 +6,13 @@ Every function takes a Supabase client and returns typed results.
 All writes exclude None/unset fields so Supabase defaults apply.
 """
 
+# pyright: reportReturnType=false, reportArgumentType=false
+# supabase-py types rows as generic JSON; this module is replaced with the new schema in #4.
+
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from supabase import Client
 
@@ -31,14 +34,14 @@ logger = logging.getLogger("prismos.db.queries")
 # =============================================================================
 
 
-async def create_session(db: Client, row: SessionRow) -> Dict[str, Any]:
+async def create_session(db: Client, row: SessionRow) -> dict[str, Any]:
     """Insert a new session. Returns the created row."""
     data = row.model_dump(exclude_none=True)
     result = db.table("sessions").insert(data).execute()
     return result.data[0] if result.data else {}
 
 
-async def get_session(db: Client, session_id: str) -> Optional[Dict[str, Any]]:
+async def get_session(db: Client, session_id: str) -> dict[str, Any] | None:
     """Fetch a single session by ID."""
     result = (
         db.table("sessions")
@@ -51,15 +54,15 @@ async def get_session(db: Client, session_id: str) -> Optional[Dict[str, Any]]:
 
 async def delete_session(db: Client, session_id: str) -> bool:
     """Delete a session."""
-    result = db.table("sessions").delete().eq("id", session_id).execute()
+    db.table("sessions").delete().eq("id", session_id).execute()
     return True
 
 async def list_sessions(
     db: Client,
-    session_token: Optional[str] = None,
-    project_id: Optional[str] = None,
+    session_token: str | None = None,
+    project_id: str | None = None,
     limit: int = 50,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """List sessions, optionally filtered by anonymous session token and project_id."""
     query = db.table("sessions").select("*").order("created_at", desc=True).limit(limit)
     if session_token:
@@ -73,8 +76,8 @@ async def list_sessions(
 async def update_session(
     db: Client,
     session_id: str,
-    updates: Dict[str, Any],
-) -> Dict[str, Any]:
+    updates: dict[str, Any],
+) -> dict[str, Any]:
     """Partial update on a session row."""
     result = (
         db.table("sessions")
@@ -92,7 +95,7 @@ async def update_session(
 
 async def create_product_context(
     db: Client, row: ProductContextRow
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Insert the Context Analyst output for a session."""
     data = row.model_dump(exclude_none=True)
     result = db.table("product_contexts").insert(data).execute()
@@ -101,7 +104,7 @@ async def create_product_context(
 
 async def get_product_context(
     db: Client, session_id: str
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Fetch product context by session ID (1:1 relationship)."""
     result = (
         db.table("product_contexts")
@@ -120,7 +123,7 @@ async def get_product_context(
 
 async def create_agent_output(
     db: Client, row: AgentOutputRow
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Insert an agent's completed output."""
     data = row.model_dump(exclude_none=True)
     result = db.table("agent_outputs").insert(data).execute()
@@ -129,7 +132,7 @@ async def create_agent_output(
 
 async def get_agent_outputs(
     db: Client, session_id: str
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Fetch all agent outputs for a session, ordered by step."""
     result = (
         db.table("agent_outputs")
@@ -143,7 +146,7 @@ async def get_agent_outputs(
 
 async def get_agent_output(
     db: Client, session_id: str, agent: str
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Fetch a specific agent's output for a session."""
     result = (
         db.table("agent_outputs")
@@ -163,7 +166,7 @@ async def get_agent_output(
 
 async def create_conflict_log(
     db: Client, row: ConflictLogRow
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Insert a conflict log entry."""
     data = row.model_dump(exclude_none=True)
     result = db.table("conflict_logs").insert(data).execute()
@@ -172,7 +175,7 @@ async def create_conflict_log(
 
 async def get_conflict_logs(
     db: Client, session_id: str
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Fetch all conflict logs for a session."""
     result = (
         db.table("conflict_logs")
@@ -191,7 +194,7 @@ async def get_conflict_logs(
 
 async def create_benchmark_record(
     db: Client, row: BenchmarkRecordRow
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Insert a benchmark comparison record."""
     data = row.model_dump(exclude_none=True)
     result = db.table("benchmark_records").insert(data).execute()
@@ -200,7 +203,7 @@ async def create_benchmark_record(
 
 async def get_benchmark_record(
     db: Client, session_id: str
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Fetch benchmark data for a session (1:1 relationship)."""
     result = (
         db.table("benchmark_records")
@@ -217,14 +220,14 @@ async def get_benchmark_record(
 # =============================================================================
 
 
-async def create_project(db: Client, row: ProjectRow) -> Dict[str, Any]:
+async def create_project(db: Client, row: ProjectRow) -> dict[str, Any]:
     """Insert a new project."""
     data = row.model_dump(exclude_none=True)
     result = db.table("projects").insert(data).execute()
     return result.data[0] if result.data else {}
 
 
-async def get_project(db: Client, project_id: str) -> Optional[Dict[str, Any]]:
+async def get_project(db: Client, project_id: str) -> dict[str, Any] | None:
     """Fetch a project by ID."""
     result = (
         db.table("projects")
@@ -238,9 +241,9 @@ async def get_project(db: Client, project_id: str) -> Optional[Dict[str, Any]]:
 
 async def list_projects(
     db: Client,
-    session_token: Optional[str] = None,
+    session_token: str | None = None,
     limit: int = 50,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """List projects, optionally filtered by owner token."""
     query = (
         db.table("projects")
@@ -257,8 +260,8 @@ async def list_projects(
 async def update_project(
     db: Client,
     project_id: str,
-    updates: Dict[str, Any],
-) -> Dict[str, Any]:
+    updates: dict[str, Any],
+) -> dict[str, Any]:
     """Partial update on a project row."""
     result = (
         db.table("projects")
@@ -271,7 +274,7 @@ async def update_project(
 
 async def delete_project(db: Client, project_id: str) -> bool:
     """Delete a project."""
-    result = db.table("projects").delete().eq("id", project_id).execute()
+    db.table("projects").delete().eq("id", project_id).execute()
     return True
 
 
@@ -281,8 +284,8 @@ async def delete_project(db: Client, project_id: str) -> bool:
 
 
 async def create_memory_entries(
-    db: Client, rows: List[MemoryEntryRow]
-) -> List[Dict[str, Any]]:
+    db: Client, rows: list[MemoryEntryRow]
+) -> list[dict[str, Any]]:
     """Batch-insert memory entries after a completed run."""
     data = [r.model_dump(exclude_none=True) for r in rows]
     if not data:
@@ -295,7 +298,7 @@ async def get_memory_entries(
     db: Client,
     project_id: str,
     limit: int = 20,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Load project memory entries, most recent first (hackathon: full load)."""
     result = (
         db.table("memory_entries")

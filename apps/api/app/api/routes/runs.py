@@ -10,9 +10,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
-from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from app.api.deps import get_db, get_session_token
@@ -25,9 +24,9 @@ from app.db.models import (
 )
 from app.orchestration.graph import run_pipeline
 from app.orchestration.streaming import (
+    KEEPALIVE_COMMENT,
     event_bus,
     format_sse,
-    KEEPALIVE_COMMENT,
 )
 
 logger = logging.getLogger("prismos.routes.runs")
@@ -40,7 +39,7 @@ async def create_run(
     body: CreateRunRequest,
     background_tasks: BackgroundTasks,
     db=Depends(get_db),
-    session_token: Optional[str] = Depends(get_session_token),
+    session_token: str | None = Depends(get_session_token),
 ):
     """
     Start a new agent run.
@@ -95,7 +94,7 @@ async def create_run(
         await queries.create_session(db, row)
     except Exception as e:
         logger.error("Failed to create session: %s", e)
-        raise HTTPException(status_code=500, detail="Failed to create session")
+        raise HTTPException(status_code=500, detail="Failed to create session") from e
 
     # ── Update project last_run_at ───────────────────────────────────────
     if body.project_id:
@@ -146,7 +145,7 @@ async def stream_run(request: Request, session_id: str, db=Depends(get_db)):
                 try:
                     # Wait for next event with a 15s timeout for keepalive
                     event = await asyncio.wait_for(queue.get(), timeout=15.0)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # Send keepalive comment to keep connection alive
                     yield KEEPALIVE_COMMENT
                     continue

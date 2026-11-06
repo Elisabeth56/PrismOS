@@ -12,7 +12,8 @@ Handles:
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
@@ -22,7 +23,7 @@ from app.config import get_settings
 logger = logging.getLogger("prismos.agents")
 
 # Lazy-initialised shared client
-_client: Optional[AsyncOpenAI] = None
+_client: AsyncOpenAI | None = None
 
 
 def _get_client() -> AsyncOpenAI:
@@ -56,7 +57,7 @@ class BaseAgent:
 
     # ── Context Assembly ─────────────────────────────────────────────────
 
-    def build_system_prompt(self, context: Dict[str, Any]) -> str:
+    def build_system_prompt(self, context: dict[str, Any]) -> str:
         """
         Assemble the full system prompt with injected context.
 
@@ -66,7 +67,7 @@ class BaseAgent:
         ProductContextSummary is injected at the system prompt level,
         not as a user message (per spec §11 note 3).
         """
-        blocks: List[str] = []
+        blocks: list[str] = []
 
         # 1. Product context (Agent 0 output)
         if context.get("product_context"):
@@ -87,7 +88,7 @@ class BaseAgent:
 
         return "\n\n---\n\n".join(blocks)
 
-    def build_messages(self, context: Dict[str, Any]) -> List[ChatCompletionMessageParam]:
+    def build_messages(self, context: dict[str, Any]) -> list[ChatCompletionMessageParam]:
         """
         Build the messages array for the Qwen API call.
 
@@ -95,7 +96,7 @@ class BaseAgent:
         User messages: prior agent outputs (if any) + task
         """
         system = self.build_system_prompt(context)
-        messages: List[ChatCompletionMessageParam] = [
+        messages: list[ChatCompletionMessageParam] = [
             {"role": "system", "content": system}
         ]
 
@@ -123,7 +124,7 @@ class BaseAgent:
 
     async def run(
         self,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         stream_callback: Callable[[str], Any],
     ) -> str:
         """

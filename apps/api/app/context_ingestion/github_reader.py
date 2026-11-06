@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 
@@ -53,7 +53,7 @@ INTERESTING_PATTERNS = [
 ]
 
 
-def _parse_repo_url(url: str) -> Optional[tuple[str, str]]:
+def _parse_repo_url(url: str) -> tuple[str, str] | None:
     """Extract (owner, repo) from a GitHub URL."""
     match = re.match(
         r"https?://github\.com/([^/]+)/([^/]+?)(?:\.git)?/?$", url
@@ -63,7 +63,7 @@ def _parse_repo_url(url: str) -> Optional[tuple[str, str]]:
     return None
 
 
-async def fetch_github_repo(github_url: str) -> Dict[str, Any]:
+async def fetch_github_repo(github_url: str) -> dict[str, Any]:
     """
     Fetch key information from a public GitHub repo.
 
@@ -82,7 +82,7 @@ async def fetch_github_repo(github_url: str) -> Dict[str, Any]:
     if settings.GITHUB_TOKEN:
         headers["Authorization"] = f"token {settings.GITHUB_TOKEN}"
 
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "owner": owner,
         "repo": repo,
         "tree": [],

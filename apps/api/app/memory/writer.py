@@ -19,7 +19,6 @@ What is persisted:
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
 
 from app.db import queries
 from app.db.models import MemoryEntryRow
@@ -47,7 +46,7 @@ async def write_memory(
         logger.info("No project_id — skipping memory write")
         return 0
 
-    entries: List[MemoryEntryRow] = []
+    entries: list[MemoryEntryRow] = []
     classification = state.get("feature_classification", "")
     feature_req = state.get("user_input", "")[:200]
 

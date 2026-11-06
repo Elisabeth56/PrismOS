@@ -16,9 +16,8 @@ Markers:
 from __future__ import annotations
 
 import logging
-import re
 import uuid
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 logger = logging.getLogger("prismos.conflict")
 
@@ -33,7 +32,7 @@ ALL_MARKERS = RESOLUTION_MARKERS + WARNING_MARKERS
 
 def _extract_markers(
     output: str, agent_name: str
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """
     Extract conflict markers from an agent's output.
 
@@ -73,7 +72,7 @@ def detect_conflicts(
     architect_output: str,
     engineer_output: str,
     qa_output: str,
-) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """
     Scan all parallel debate outputs and classify findings.
 
@@ -137,7 +136,10 @@ def detect_conflicts(
                     if f["marker"] == "DISAGREES:" and f["agent"] != finding["agent"]
                 ],
                 "marker": finding["marker"],
-                "summary": f"{finding['agent']} flagged {finding['marker']} and another agent disagrees\n\nContext:\n{finding['context']}",
+                "summary": (
+                    f"{finding['agent']} flagged {finding['marker']} and another agent disagrees"
+                    f"\n\nContext:\n{finding['context']}"
+                ),
                 "source_agent": finding["agent"],
                 "context": finding["context"],
             })

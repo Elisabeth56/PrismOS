@@ -9,7 +9,7 @@ useful information: language, framework hints, structure.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger("prismos.context.files")
 
@@ -35,8 +35,8 @@ EXT_MAP = {
 
 
 def parse_files(
-    file_contents: Optional[List[Dict[str, str]]],
-) -> Dict[str, Any]:
+    file_contents: list[dict[str, str]] | None,
+) -> dict[str, Any]:
     """
     Parse uploaded file contents.
 

@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from app.context_ingestion.file_parser import parse_files
 from app.context_ingestion.github_reader import fetch_github_repo
@@ -23,7 +23,7 @@ from app.context_ingestion.url_crawler import crawl_url
 logger = logging.getLogger("prismos.context.builder")
 
 
-async def build_context(context_inputs: Dict[str, Any]) -> str:
+async def build_context(context_inputs: dict[str, Any]) -> str:
     """
     Process all context inputs in parallel and merge into a single
     formatted string for the Context Analyst agent.
@@ -60,7 +60,7 @@ async def build_context(context_inputs: Dict[str, Any]) -> str:
         gathered = await asyncio.gather(
             *tasks.values(), return_exceptions=True
         )
-        for key, result in zip(tasks.keys(), gathered):
+        for key, result in zip(tasks.keys(), gathered, strict=True):
             if isinstance(result, Exception):
                 logger.warning("Context task '%s' failed: %s", key, result)
                 results[key] = {"error": str(result)}

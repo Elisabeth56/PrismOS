@@ -13,8 +13,8 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes import benchmark, projects, runs, sessions
 from app.config import get_settings
-from app.api.routes import runs, sessions, benchmark, projects
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 settings = get_settings()

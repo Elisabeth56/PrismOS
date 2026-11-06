@@ -10,7 +10,6 @@ Project endpoints:
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -34,7 +33,7 @@ router = APIRouter()
 async def create_project(
     body: CreateProjectRequest,
     db=Depends(get_db),
-    session_token: Optional[str] = Depends(get_session_token),
+    session_token: str | None = Depends(get_session_token),
 ):
     """Create a new project (memory namespace for related runs)."""
     row = ProjectRow(
@@ -47,7 +46,7 @@ async def create_project(
         created = await queries.create_project(db, row)
     except Exception as e:
         logger.error("Failed to create project: %s", e)
-        raise HTTPException(status_code=500, detail="Failed to create project")
+        raise HTTPException(status_code=500, detail="Failed to create project") from e
 
     return CreateProjectResponse(
         id=created["id"],
@@ -59,7 +58,7 @@ async def create_project(
 @router.get("/projects")
 async def list_projects(
     db=Depends(get_db),
-    session_token: Optional[str] = Depends(get_session_token),
+    session_token: str | None = Depends(get_session_token),
 ):
     """List all projects, filtered by the anonymous session token."""
     rows = await queries.list_projects(db, session_token=session_token)
@@ -99,7 +98,7 @@ async def update_project(
         updated = await queries.update_project(db, project_id, updates)
     except Exception as e:
         logger.error("Failed to update project: %s", e)
-        raise HTTPException(status_code=500, detail="Failed to update project")
+        raise HTTPException(status_code=500, detail="Failed to update project") from e
 
     return UpdateProjectResponse(
         id=updated["id"],
@@ -157,4 +156,4 @@ async def delete_project(
         return {"success": success}
     except Exception as e:
         logger.error("Failed to delete project: %s", e)
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Failed to delete project") from e

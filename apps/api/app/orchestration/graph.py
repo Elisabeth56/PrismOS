@@ -19,10 +19,9 @@ Each node:
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict
+from datetime import UTC, datetime
+from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
@@ -46,21 +45,17 @@ from app.orchestration.state import PrismOSState
 from app.orchestration.streaming import (
     emit_agent_done,
     emit_agent_start,
-    emit_agent_token,
     emit_conflict_done,
     emit_conflict_start,
     emit_context_analyst_done,
     emit_context_analyst_start,
-    emit_context_analyst_token,
     emit_memory_load_done,
     emit_memory_load_start,
-    emit_memory_write_done,
     emit_run_complete,
     emit_run_error,
     emit_run_start,
     emit_uiux_designer_done,
     emit_uiux_designer_start,
-    emit_uiux_designer_token,
     make_stream_callback,
 )
 
@@ -107,7 +102,7 @@ def _build_prior_outputs(**sections: str) -> str:
 # Node: Memory Load (pre-Step 0)
 # =============================================================================
 
-async def memory_load_node(state: PrismOSState) -> Dict[str, Any]:
+async def memory_load_node(state: PrismOSState) -> dict[str, Any]:
     """Load project memory before anything else runs."""
     sid = state["session_id"]
     pid = state.get("project_id")
@@ -133,7 +128,7 @@ async def memory_load_node(state: PrismOSState) -> Dict[str, Any]:
 # Node: Context Analyst (Step 0)
 # =============================================================================
 
-async def context_analyst_node(state: PrismOSState) -> Dict[str, Any]:
+async def context_analyst_node(state: PrismOSState) -> dict[str, Any]:
     """Agent 0 — analyse existing product from context inputs."""
     sid = state["session_id"]
 
@@ -187,7 +182,7 @@ async def context_analyst_node(state: PrismOSState) -> Dict[str, Any]:
 # Node: PM (Steps 1 + 2 — intake + PRD)
 # =============================================================================
 
-async def pm_node(state: PrismOSState) -> Dict[str, Any]:
+async def pm_node(state: PrismOSState) -> dict[str, Any]:
     """PM Agent — feature classification + PRD."""
     sid = state["session_id"]
 
@@ -218,7 +213,7 @@ async def pm_node(state: PrismOSState) -> Dict[str, Any]:
 # Node: Parallel Debate (Step 3)
 # =============================================================================
 
-async def parallel_debate_node(state: PrismOSState) -> Dict[str, Any]:
+async def parallel_debate_node(state: PrismOSState) -> dict[str, Any]:
     """Architect, Engineer, and QA debate independently in parallel."""
     sid = state["session_id"]
     prior = _build_prior_outputs(
@@ -264,7 +259,7 @@ async def parallel_debate_node(state: PrismOSState) -> Dict[str, Any]:
 # Node: Conflict Check (between Step 3 and Step 4)
 # =============================================================================
 
-async def conflict_check_node(state: PrismOSState) -> Dict[str, Any]:
+async def conflict_check_node(state: PrismOSState) -> dict[str, Any]:
     """Detect conflict markers and decide if Release Manager is needed."""
     conflicts, warnings = detect_conflicts(
         state.get("architect_output", ""),
@@ -302,7 +297,7 @@ async def conflict_check_node(state: PrismOSState) -> Dict[str, Any]:
 # Node: Resolution (Step 4 — conditional)
 # =============================================================================
 
-async def resolution_node(state: PrismOSState) -> Dict[str, Any]:
+async def resolution_node(state: PrismOSState) -> dict[str, Any]:
     """Release Manager resolves conflicts between agents."""
     sid = state["session_id"]
     conflicts = state.get("conflicts", [])
@@ -406,7 +401,7 @@ async def resolution_node(state: PrismOSState) -> Dict[str, Any]:
 # Node: UI/UX Design (Step 4.5)
 # =============================================================================
 
-async def uiux_design_node(state: PrismOSState) -> Dict[str, Any]:
+async def uiux_design_node(state: PrismOSState) -> dict[str, Any]:
     """UI/UX Designer produces full UX spec."""
     sid = state["session_id"]
 
@@ -446,7 +441,7 @@ async def uiux_design_node(state: PrismOSState) -> Dict[str, Any]:
 # Node: Build (Step 5)
 # =============================================================================
 
-async def build_node(state: PrismOSState) -> Dict[str, Any]:
+async def build_node(state: PrismOSState) -> dict[str, Any]:
     """Engineer writes final implementation informed by all prior outputs."""
     sid = state["session_id"]
 
@@ -490,7 +485,7 @@ async def build_node(state: PrismOSState) -> Dict[str, Any]:
 # Node: QA Validation (Step 6)
 # =============================================================================
 
-async def qa_validation_node(state: PrismOSState) -> Dict[str, Any]:
+async def qa_validation_node(state: PrismOSState) -> dict[str, Any]:
     """QA validates the implementation and issues verdict."""
     sid = state["session_id"]
 
@@ -537,7 +532,7 @@ async def qa_validation_node(state: PrismOSState) -> Dict[str, Any]:
 # Node: Final Package (Step 7)
 # =============================================================================
 
-async def final_package_node(state: PrismOSState) -> Dict[str, Any]:
+async def final_package_node(state: PrismOSState) -> dict[str, Any]:
     """Assemble final package, run baseline, compute benchmark."""
     sid = state["session_id"]
     db = get_supabase()
@@ -607,7 +602,7 @@ async def final_package_node(state: PrismOSState) -> Dict[str, Any]:
             "step_completed": 7,
             "status": "complete",
             "verdict": verdict,
-            "completed_at": datetime.now(timezone.utc).isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         })
     except Exception as e:
         logger.warning("Failed to update session status: %s", e)
@@ -734,7 +729,7 @@ async def run_pipeline(
         try:
             await queries.update_session(db, session_id, {
                 "status": "error",
-                "completed_at": datetime.now(timezone.utc).isoformat(),
+                "completed_at": datetime.now(UTC).isoformat(),
             })
         except Exception:
             pass
