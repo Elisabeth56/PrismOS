@@ -55,7 +55,11 @@ class Usage:
 
 
 class LLMUnavailable(Exception):
-    """Every model in the chain failed with a transient error (rate limits, outages, timeouts)."""
+    """No model in the chain could answer. `reasons` says why, per provider, in words safe to show users."""
+
+    def __init__(self, reasons: list[str]):
+        super().__init__("All models failed: " + "; ".join(reasons))
+        self.reasons = reasons
 
 
 class LLMOutputInvalid(Exception):
@@ -63,10 +67,20 @@ class LLMOutputInvalid(Exception):
 
 
 def model_chain(size: Size) -> list[Model]:
-    """Which models a call tries, in order. Groq only serves small calls: its free tier caps tokens per minute."""
+    """Which models a call tries, in order. Small calls start on Groq. Large calls start on Gemini and use Groq
+    only as a last resort, because Groq's free tier caps tokens per minute."""
     s = get_settings()
-    large = [Model("gemini", s.GEMINI_MODEL), Model("gemini", s.GEMINI_FALLBACK_MODEL)]
-    return large if size == "large" else [Model("groq", s.GROQ_MODEL), *large[1:]]
+    gemini = [Model("gemini", s.GEMINI_MODEL), Model("gemini", s.GEMINI_FALLBACK_MODEL)]
+    groq = Model("groq", s.GROQ_MODEL)
+    return [*gemini, groq] if size == "large" else [groq, *gemini[1:]]
+
+
+def _rejection(error: openai.APIStatusError) -> str:
+    """The provider's own explanation (bad key, unsupported region, unknown model), short enough to show."""
+    body = error.body if isinstance(error.body, dict) else {}
+    detail = body.get("error", body) if isinstance(body.get("error", body), dict) else {}
+    message = detail.get("message") or error.message
+    return f"{error.status_code} {str(message).strip()[:200]}"
 
 
 @lru_cache
@@ -112,14 +126,21 @@ async def _complete(
 
 
 async def _with_fallback(size: Size, messages: Sequence[Message], temperature: float, json_mode: bool):
-    errors: list[str] = []
+    reasons: list[str] = []
+    refused: set[Provider] = set()
     for model in model_chain(size):
+        if model.provider in refused:
+            continue
         try:
             return await _complete(model, messages, temperature, json_mode)
         except TRANSIENT as error:
-            errors.append(f"{model.name}: {type(error).__name__}")
-            logger.warning("llm falling back: %s", errors[-1])
-    raise LLMUnavailable("All models failed: " + "; ".join(errors))
+            reasons.append(f"{model.provider.title()} ({model.name}): {type(error).__name__}")
+        except openai.APIStatusError as error:
+            # a refusal (bad key, region, quota policy) applies to the whole provider: skip its other models
+            refused.add(model.provider)
+            reasons.append(f"{model.provider.title()} refused the request: {_rejection(error)}")
+        logger.warning("llm falling back: %s", reasons[-1])
+    raise LLMUnavailable(reasons)
 
 
 async def generate[T: BaseModel](

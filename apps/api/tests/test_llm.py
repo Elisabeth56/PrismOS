@@ -89,7 +89,7 @@ async def test_small_calls_go_to_groq_first(provider):
 
 async def test_every_model_rate_limited_raises_unavailable(provider):
     _, responses = provider
-    responses.extend([RATE_LIMITED] * 4)
+    responses.extend([RATE_LIMITED] * 6)  # two tries each for three models
 
     with pytest.raises(llm.LLMUnavailable):
         await llm.generate([{"role": "user", "content": "check"}], Verdict)
@@ -113,10 +113,30 @@ async def test_invalid_json_twice_raises(provider):
         await llm.generate([{"role": "user", "content": "check"}], Verdict)
 
 
-async def test_bad_request_is_not_retried(provider):
+async def test_a_refusal_skips_that_provider_and_tries_the_next(provider):
     calls, responses = provider
-    responses.append(httpx.Response(400, json={"error": {"message": "bad"}}))
+    responses.extend([httpx.Response(400, json={"error": {"message": "User location is not supported"}}), ok(GOOD)])
 
-    with pytest.raises(Exception, match="bad"):
+    result, _ = await llm.generate([{"role": "user", "content": "check"}], Verdict)
+
+    assert result.verdict == "verified"
+    # not retried, and the other Gemini model is skipped: the refusal is about the account, not the model
+    assert calls == ["gemini-2.5-flash", "openai/gpt-oss-120b"]
+
+
+async def test_when_every_provider_refuses_the_reasons_are_kept(provider):
+    _, responses = provider
+    responses.extend(
+        [
+            httpx.Response(400, json={"error": {"message": "User location is not supported"}}),
+            httpx.Response(401, json={"error": {"message": "Invalid API Key"}}),
+        ]
+    )
+
+    with pytest.raises(llm.LLMUnavailable) as raised:
         await llm.generate([{"role": "user", "content": "check"}], Verdict)
-    assert len(calls) == 1
+
+    assert raised.value.reasons == [
+        "Gemini refused the request: 400 User location is not supported",
+        "Groq refused the request: 401 Invalid API Key",
+    ]
