@@ -14,5 +14,8 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) return NextResponse.redirect(`${origin}${next}`)
   }
-  return NextResponse.redirect(`${origin}/sign-in?error=callback`)
+  // Supabase passes GitHub's refusal along; show it rather than a bare "try again"
+  const reason = searchParams.get('error_description')
+  const query = new URLSearchParams({ error: 'callback', ...(reason && { reason: reason.slice(0, 200) }) })
+  return NextResponse.redirect(`${origin}/sign-in?${query}`)
 }
