@@ -10,7 +10,9 @@ import { createClient } from '@/lib/supabase/client'
 function SignIn() {
   const params = useSearchParams()
   const [pending, setPending] = useState(false)
-  const [error, setError] = useState(params.get('error') ? "Sign-in didn't complete. Try again." : '')
+  const [error, setError] = useState(
+    params.get('error') ? `Sign-in didn't complete${params.get('reason') ? `: ${params.get('reason')}` : '.'} Try again.` : '',
+  )
 
   async function signInWithGitHub() {
     setPending(true)
