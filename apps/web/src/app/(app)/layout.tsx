@@ -16,6 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     avatarUrl: (meta.avatar_url as string | undefined) ?? null,
     email: user.email ?? null,
     joinedAt: user.created_at,
+    readOnly: user.app_metadata?.read_only === true,
   }
   return <Shell account={account}>{children}</Shell>
 }

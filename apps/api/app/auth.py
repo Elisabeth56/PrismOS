@@ -8,7 +8,7 @@ from functools import lru_cache
 from typing import Any
 
 import jwt
-from fastapi import Header
+from fastapi import Depends, Header
 
 from app.config import Settings, get_settings
 from app.errors import AppError
@@ -18,6 +18,8 @@ from app.errors import AppError
 class User:
     id: str
     email: str | None
+    # set in app_metadata, which only the service role can write; the public demo account has it
+    read_only: bool = False
 
 
 INVALID = AppError(401, "invalid_token", "Your session is invalid or has expired. Sign in again.")
@@ -49,7 +51,8 @@ def verify_token(token: str, settings: Settings) -> User:
         )
     except (jwt.PyJWTError, ValueError) as error:
         raise INVALID from error
-    return User(id=claims["sub"], email=claims.get("email"))
+    app_metadata = claims.get("app_metadata") or {}
+    return User(id=claims["sub"], email=claims.get("email"), read_only=app_metadata.get("read_only") is True)
 
 
 async def current_user(authorization: str | None = Header(default=None)) -> User:
@@ -58,3 +61,11 @@ async def current_user(authorization: str | None = Header(default=None)) -> User
         raise AppError(401, "not_signed_in", "Sign in to continue.")
     # the JWKS fetch on a cold cache is blocking network I/O
     return await asyncio.to_thread(verify_token, authorization[7:].strip(), get_settings())
+
+
+async def writer(user: User = Depends(current_user)) -> User:
+    """Dependency for routes that change something: read-only accounts can look but not start or edit."""
+    if user.read_only:
+        message = "The demo account can look around but can't make changes. Sign in with GitHub to use your own repos."
+        raise AppError(403, "demo_read_only", message)
+    return user

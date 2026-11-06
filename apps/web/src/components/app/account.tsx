@@ -8,6 +8,8 @@ export interface Account {
   avatarUrl: string | null
   email: string | null
   joinedAt: string
+  /** the shared demo account: it can look at everything it's a member of but change nothing */
+  readOnly: boolean
 }
 
 const AccountContext = createContext<Account | null>(null)

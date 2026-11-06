@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 
+import { useAccount } from '@/components/app/account'
 import { ErrorPanel, Skeleton } from '@/components/app/page-states'
 import { DeleteProjectDialog, EditProjectDialog } from '@/components/app/project-dialogs'
 import { Button, ButtonLink } from '@/components/ui'
@@ -13,6 +14,7 @@ import { useApi } from '@/lib/use-api'
 /** Every project you're in, with create, edit and delete right here. Each one opens into its workspace. */
 export default function Projects() {
   const projects = useApi(api.projects, 'projects')
+  const { readOnly } = useAccount()
   const [editing, setEditing] = useState<Project | null>(null)
   const [deleting, setDeleting] = useState<Project | null>(null)
 
@@ -23,9 +25,11 @@ export default function Projects() {
           <h1 className="text-title-1 font-semibold">Projects</h1>
           <p className="text-ink-2">One project per repository. Runs, their history and settings live inside it.</p>
         </div>
-        <ButtonLink href="/projects/new" variant="primary">
-          New project
-        </ButtonLink>
+        {!readOnly && (
+          <ButtonLink href="/projects/new" variant="primary">
+            New project
+          </ButtonLink>
+        )}
       </header>
 
       {projects.error && <ErrorPanel error={projects.error} onRetry={projects.reload} />}

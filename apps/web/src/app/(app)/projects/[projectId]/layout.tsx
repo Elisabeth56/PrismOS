@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { use, useEffect } from 'react'
 
+import { useAccount } from '@/components/app/account'
 import { ErrorPanel, Skeleton } from '@/components/app/page-states'
 import { ProjectProvider } from '@/components/app/project-context'
 import { ButtonLink } from '@/components/ui'
@@ -21,6 +22,7 @@ export default function ProjectWorkspace({
 }) {
   const { projectId } = use(params)
   const path = usePathname()
+  const { readOnly } = useAccount()
   const project = useApi(() => api.project(projectId), `project-${projectId}`)
   const [, setLastProject] = useStored('prismos:last-project', '')
   const base = `/projects/${projectId}`
@@ -67,9 +69,11 @@ export default function ProjectWorkspace({
               </>
             )}
           </div>
-          <ButtonLink href={`${base}/runs/new`} variant="primary" shortcut="⌘K">
+          {!readOnly && (
+<ButtonLink href={`${base}/runs/new`} variant="primary" shortcut="⌘K">
             New run
           </ButtonLink>
+)}
         </div>
         <nav aria-label="Project" className="-mb-px flex gap-1">
           {tabs.map((tab) => (

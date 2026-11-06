@@ -5,7 +5,7 @@ from uuid import UUID
 import httpx
 from fastapi import APIRouter, Depends, Query
 
-from app.auth import User, current_user
+from app.auth import User, current_user, writer
 from app.config import get_settings
 from app.database import Conn, get_conn
 from app.features.github.router import github_transport
@@ -18,7 +18,7 @@ router = APIRouter(tags=["runs"])
 
 
 @router.post("/runs", status_code=202, response_model=RunOut)
-async def create_run(body: RunCreate, user: User = Depends(current_user), conn: Conn = Depends(get_conn)):
+async def create_run(body: RunCreate, user: User = Depends(writer), conn: Conn = Depends(get_conn)):
     """Queues a run. 202: accepted, not done; follow it on /runs/{id}."""
     return await logic.create_run(conn, user.id, body, get_settings())
 
@@ -40,12 +40,12 @@ async def list_events(
 
 
 @router.post("/runs/{run_id}/cancel", response_model=RunOut)
-async def cancel_run(run_id: UUID, user: User = Depends(current_user), conn: Conn = Depends(get_conn)):
+async def cancel_run(run_id: UUID, user: User = Depends(writer), conn: Conn = Depends(get_conn)):
     return await logic.cancel_run(conn, user.id, run_id)
 
 
 @router.post("/runs/{run_id}/retry", response_model=RunOut)
-async def retry_run(run_id: UUID, user: User = Depends(current_user), conn: Conn = Depends(get_conn)):
+async def retry_run(run_id: UUID, user: User = Depends(writer), conn: Conn = Depends(get_conn)):
     """Resumes a failed or cancelled run from its first unfinished step."""
     return await logic.retry_run(conn, user.id, run_id)
 
@@ -53,7 +53,7 @@ async def retry_run(run_id: UUID, user: User = Depends(current_user), conn: Conn
 @router.post("/runs/{run_id}/approve", response_model=RunDetail)
 async def approve(
     run_id: UUID,
-    user: User = Depends(current_user),
+    user: User = Depends(writer),
     conn: Conn = Depends(get_conn),
     github_app: GitHubApp | None = Depends(get_github_app),
     transport: httpx.AsyncBaseTransport | None = Depends(github_transport),

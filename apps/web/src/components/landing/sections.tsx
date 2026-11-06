@@ -93,8 +93,8 @@ export function FinalCta() {
           <ButtonLink href="/sign-in?next=/runs/new" prefetch={false} variant="primary" size="lg" shortcut="⌘K">
             Start a run
           </ButtonLink>
-          <ButtonLink href={REPO} size="lg">
-            Read the source
+          <ButtonLink href="/demo" prefetch={false} size="lg">
+            Try the demo
           </ButtonLink>
         </div>
       </div>
@@ -118,6 +118,7 @@ export function Footer() {
               <a href="#critics" className="lp-link">The critics</a>
               <a href="#safety" className="lp-link">Safety</a>
               <a href="/sign-in?next=/runs/new" className="lp-link">Start a run</a>
+              <a href="/demo" className="lp-link">Try the demo</a>
             </nav>
             <nav aria-label="Build notes" className="flex min-w-[140px] flex-col gap-3">
               <span className="text-[12px] leading-4 font-medium tracking-[0.02em] text-ink-3">Build notes</span>

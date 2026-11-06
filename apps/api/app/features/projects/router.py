@@ -5,7 +5,7 @@ from uuid import UUID
 import httpx
 from fastapi import APIRouter, Depends, Response
 
-from app.auth import User, current_user
+from app.auth import User, current_user, writer
 from app.database import Conn, get_conn
 from app.features.github.router import github_transport, github_user_token
 from app.features.projects import logic
@@ -24,7 +24,7 @@ async def list_projects(user: User = Depends(current_user), conn: Conn = Depends
 @router.post("", status_code=201, response_model=ProjectOut)
 async def create_project(
     body: ProjectCreate,
-    user: User = Depends(current_user),
+    user: User = Depends(writer),
     conn: Conn = Depends(get_conn),
     token: str = Depends(github_user_token),
     transport: httpx.AsyncBaseTransport | None = Depends(github_transport),
@@ -40,14 +40,14 @@ async def get_project(project_id: UUID, user: User = Depends(current_user), conn
 
 @router.patch("/{project_id}", response_model=ProjectOut)
 async def update_project(
-    project_id: UUID, body: ProjectUpdate, user: User = Depends(current_user), conn: Conn = Depends(get_conn)
+    project_id: UUID, body: ProjectUpdate, user: User = Depends(writer), conn: Conn = Depends(get_conn)
 ):
     """Rename the project or change the branch new runs start from. Owners only."""
     return await logic.update_project(conn, user.id, project_id, body)
 
 
 @router.delete("/{project_id}", status_code=204)
-async def delete_project(project_id: UUID, user: User = Depends(current_user), conn: Conn = Depends(get_conn)):
+async def delete_project(project_id: UUID, user: User = Depends(writer), conn: Conn = Depends(get_conn)):
     """Removes the project and its run history from PrismOS. Nothing on GitHub changes. Owners only."""
     await logic.delete_project(conn, user.id, project_id)
     return Response(status_code=204)

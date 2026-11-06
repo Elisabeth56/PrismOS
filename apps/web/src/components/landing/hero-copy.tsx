@@ -72,9 +72,9 @@ export function HeroCopy() {
         <ButtonLink href="/sign-in?next=/runs/new" prefetch={false} variant="primary" size="lg">
           Start a run
         </ButtonLink>
-        <a href="#demo" className="px-btn px-btn--ghost">
-          Watch one first
-        </a>
+        <ButtonLink href="/demo" prefetch={false} size="lg">
+          Try the demo
+        </ButtonLink>
       </div>
     </div>
   )
