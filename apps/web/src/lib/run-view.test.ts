@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { RunDetail } from './api'
-import { criticState, runView } from './run-view'
+import { criticState, resumePoint, runView } from './run-view'
 
 const base: RunDetail = {
   id: 'r1',
@@ -71,5 +71,19 @@ describe('criticState', () => {
       { item_id: '3', severity: 'blocking' as const, concern: '', proposed_change: '' },
     ] }
     expect(criticState(two, false)).toEqual({ state: 'Blocks items 2 and 3', count: 2 })
+  })
+})
+
+describe('resumePoint', () => {
+  it('keeps finished steps and restarts at the first missing one', () => {
+    expect(resumePoint(base)).toEqual({ kept: ['files', 'spec'], from: 'Review' })
+  })
+
+  it('skips resolve when there were no conflicts', () => {
+    const reviewed = {
+      ...base,
+      steps: { ...base.steps, critic_security: {}, critic_ux: {} },
+    }
+    expect(resumePoint({ ...reviewed, steps: { ...reviewed.steps, critic_architect: {} } }).from).toBe('Build')
   })
 })

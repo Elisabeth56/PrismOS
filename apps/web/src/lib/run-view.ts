@@ -90,3 +90,30 @@ export function criticState(review: CriticReview | null, active: boolean): { sta
   const list = items.length === 1 ? `item ${items[0]}` : `items ${items.slice(0, -1).join(', ')} and ${items.at(-1)}`
   return { state: `${blocking ? 'Blocks' : 'Objects to'} ${list}`, count: review.objections.length }
 }
+
+const RESUME_ORDER: [string, string, string | null][] = [
+  // step key, where a retry would start, what the run keeps once it's done
+  ['read_files', 'reading files', 'files'],
+  ['plan', 'Plan', 'spec'],
+  ['review', 'Review', 'review'],
+  ['resolve', 'Resolve', 'decisions'],
+  ['build', 'Build', 'build'],
+  ['verify', 'Verify', null],
+]
+
+/** For a stopped run: what's kept (cached steps) and the step a retry starts at. */
+export function resumePoint(run: RunDetail): { kept: string[]; from: string } {
+  const steps = run.steps as Record<string, unknown>
+  const done = (key: string) => (key === 'review' ? CRITICS.every((c) => `critic_${c}` in steps) : key in steps)
+  let last = -1
+  RESUME_ORDER.forEach(([key], i) => {
+    if (done(key)) last = i
+  })
+  const kept = RESUME_ORDER.slice(0, last + 1)
+    .filter(([key]) => done(key))
+    .flatMap(([, , name]) => (name ? [name] : []))
+  // resolve only runs when there were conflicts
+  let next = RESUME_ORDER[last + 1] ?? RESUME_ORDER.at(-1)!
+  if (next[0] === 'resolve' && run.conflicts.length === 0) next = RESUME_ORDER[last + 2]
+  return { kept, from: last < 0 ? 'the start' : next[1] }
+}

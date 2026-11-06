@@ -75,9 +75,12 @@ export default function NewRun() {
         <div className="flex flex-col gap-3 rounded-[24px] bg-surface-1 p-8">
           <h2 className="text-title-2 font-semibold">Connect a repo first</h2>
           <p className="text-ink-2">Runs work on a GitHub repository you&apos;ve installed the PrismOS app on.</p>
-          <div>
+          <div className="flex flex-wrap gap-2">
             <Link href="/projects/connect" className="px-btn px-btn--primary">
               Add a repo
+            </Link>
+            <Link href="/#demo" className="px-btn">
+              Watch a sample run
             </Link>
           </div>
         </div>

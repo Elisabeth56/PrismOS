@@ -10,7 +10,7 @@ import { StepRail } from '@/components/run/step-rail'
 import { Button, StatusPill } from '@/components/ui'
 import { api, ApiError, type RunDetail } from '@/lib/api'
 import { shortId } from '@/lib/format'
-import { runView } from '@/lib/run-view'
+import { resumePoint, runView } from '@/lib/run-view'
 
 type Tab = 'spec' | 'review' | 'files' | 'decisions' | 'changes'
 
@@ -122,11 +122,8 @@ export function RunBody({ run, onChange }: { run: RunDetail; onChange: (run: Run
           {error}
         </p>
       )}
-      {run.status === 'failed' && run.error && (
-        <div role="alert" className="flex flex-col gap-2 rounded-[16px] bg-surface-1 p-6">
-          <h2 className="text-title-3 font-medium">The {run.error.step?.replace(/_/g, ' ') ?? 'run'} step stopped</h2>
-          <p className="text-ink-2">{run.error.message}</p>
-        </div>
+      {(run.status === 'failed' || run.status === 'cancelled') && (
+        <StoppedPanel run={run} busy={busy} onRetry={() => act(async () => onChange({ ...run, ...(await api.retry(run.id)) }))} />
       )}
 
       {!reviewing && <StepRail steps={view.rail} />}
@@ -179,5 +176,31 @@ export function RunBody({ run, onChange }: { run: RunDetail; onChange: (run: Run
         </div>
       )}
     </div>
+  )
+}
+
+function StoppedPanel({ run, busy, onRetry }: { run: RunDetail; busy: boolean; onRetry: () => void }) {
+  const { kept, from } = resumePoint(run)
+  const failed = run.status === 'failed'
+  const step = run.error?.step?.replace(/^critic_.*/, 'review').replace(/_/g, ' ')
+  return (
+    <section role={failed ? 'alert' : undefined} className="flex flex-col gap-4 rounded-[24px] bg-surface-1 p-6 sm:p-8">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-title-2 font-semibold">{failed ? `The ${step ?? 'run'} step stopped` : 'You cancelled this run'}</h2>
+        {failed && <p className="text-ink-2">{run.error?.message}</p>}
+      </div>
+      <div className="flex flex-col gap-1.5 rounded-[12px] bg-surface-2 p-4">
+        <span className="text-[12px] leading-4 font-medium tracking-[0.02em] text-ink-3">Kept from this run</span>
+        <span className="text-ink-2">
+          {kept.length ? `${kept.join(', ').replace(/^./, (c) => c.toUpperCase())}. ` : 'Nothing finished yet. '}
+          Retrying starts at {from}.
+        </span>
+      </div>
+      <div>
+        <Button variant="primary" onClick={onRetry} disabled={busy}>
+          {busy ? 'Queuing…' : from === 'the start' ? 'Retry' : `Retry from ${from.toLowerCase()}`}
+        </Button>
+      </div>
+    </section>
   )
 }
