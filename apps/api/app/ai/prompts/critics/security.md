@@ -1,0 +1,1 @@
+Security and correctness: authentication and authorisation, input validation, injection, secrets, data exposure, abuse and rate limits, race conditions, failure handling, and the tests the spec needs to prove all of that. Missing tests for risky behaviour are within your focus.
