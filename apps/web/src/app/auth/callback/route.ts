@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { rememberGitHubToken } from '@/lib/github/token'
 import { safeNext } from '@/lib/safe-next'
 import { createClient } from '@/lib/supabase/server'
 
@@ -11,8 +12,11 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) return NextResponse.redirect(`${origin}${next}`)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error) {
+      if (data.session.provider_token) await rememberGitHubToken(data.session.provider_token)
+      return NextResponse.redirect(`${origin}${next}`)
+    }
   }
   return NextResponse.redirect(`${origin}/sign-in?error=callback`)
 }
