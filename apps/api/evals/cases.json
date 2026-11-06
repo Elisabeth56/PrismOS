@@ -1,0 +1,62 @@
+[
+  {
+    "id": "login-rate-limit",
+    "request": "Limit login attempts: after 5 failed logins for the same email within 15 minutes, return 429 with a Retry-After header. Add tests.",
+    "must_touch": ["app/routes/auth.py"],
+    "checks": [
+      {"path": "app/routes/auth.py", "pattern": "429", "why": "returns 429"},
+      {"path": "app/**", "pattern": "Retry-After", "why": "sets Retry-After"},
+      {"path": "tests/**", "pattern": "429", "why": "a test covers the limit"}
+    ]
+  },
+  {
+    "id": "login-same-error",
+    "request": "Return the same error for an unknown email and a wrong password, so the login endpoint doesn't reveal which emails have accounts.",
+    "must_touch": ["app/routes/auth.py"],
+    "checks": [
+      {"path": "app/routes/auth.py", "pattern": "No account with that email", "absent": true, "why": "the revealing message is gone"},
+      {"path": "app/routes/auth.py", "pattern": "Wrong password", "absent": true, "why": "both cases share one message"},
+      {"path": "app/routes/auth.py", "pattern": "401", "why": "still a 401"}
+    ]
+  },
+  {
+    "id": "notes-tag-filter",
+    "request": "Let GET /notes filter by tag with ?tag=work, returning only the caller's notes that have that tag. Add a test.",
+    "must_touch": ["app/routes/notes.py"],
+    "checks": [
+      {"path": "app/routes/notes.py", "pattern": "tag\\s*:\\s*(str|Optional|Annotated)", "why": "accepts a tag parameter"},
+      {"path": "tests/**", "pattern": "tag=", "why": "a test filters by tag"}
+    ]
+  },
+  {
+    "id": "notes-pagination",
+    "request": "Add limit and offset pagination to GET /notes. Default limit 20, maximum 100, and reject values outside that range.",
+    "must_touch": ["app/routes/notes.py"],
+    "checks": [
+      {"path": "app/routes/notes.py", "pattern": "limit", "why": "has a limit"},
+      {"path": "app/routes/notes.py", "pattern": "offset", "why": "has an offset"},
+      {"path": "app/routes/notes.py", "pattern": "le\\s*=\\s*100|<=\\s*100|100", "why": "caps the limit at 100"}
+    ]
+  },
+  {
+    "id": "notes-soft-delete",
+    "request": "Make deleting a note a soft delete: deleted notes disappear from every read, and POST /notes/{id}/restore brings one back.",
+    "must_touch": ["app/db.py", "app/routes/notes.py"],
+    "checks": [
+      {"path": "app/db.py", "pattern": "deleted_at", "why": "schema has deleted_at"},
+      {"path": "app/routes/notes.py", "pattern": "restore", "why": "restore endpoint"},
+      {"path": "app/routes/notes.py", "pattern": "deleted_at is null", "why": "reads hide deleted notes"},
+      {"path": "app/routes/notes.py", "pattern": "delete from notes", "absent": true, "why": "no hard delete left"}
+    ]
+  },
+  {
+    "id": "notes-export-markdown",
+    "request": "Add GET /notes/{id}/export that returns the note as Markdown, with the title as a heading and tags on a line at the end.",
+    "must_touch": ["app/routes/notes.py"],
+    "checks": [
+      {"path": "app/routes/notes.py", "pattern": "export", "why": "export route"},
+      {"path": "app/routes/notes.py", "pattern": "text/markdown", "why": "markdown content type"},
+      {"path": "app/routes/notes.py", "pattern": "# ", "why": "title as a heading"}
+    ]
+  }
+]

@@ -27,6 +27,8 @@ dev = [
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+# the eval's fixture is a sample repo the models change, not part of this codebase
+extend-exclude = ["evals/fixtures"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
@@ -36,16 +38,17 @@ select = ["E", "F", "I", "B", "UP"]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Header", "fastapi.Query", "fastapi.Path"]
 
 [tool.ruff.lint.per-file-ignores]
-# long prompt strings; prompts move to ai/prompts/*.md in #8
-"app/agents/*.py" = ["E501"]
+"evals/test_eval.py" = ["E501"]
 
 [tool.pyright]
-include = ["app", "tests"]
+include = ["app", "tests", "evals"]
+exclude = ["evals/fixtures"]
 pythonVersion = "3.12"
 venvPath = "."
 venv = ".venv"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "evals"]
+norecursedirs = ["evals/fixtures"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
