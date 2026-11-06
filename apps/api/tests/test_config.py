@@ -24,7 +24,7 @@ def test_cors_origins_accepts_comma_separated_string(monkeypatch):
 
 
 def test_secrets_are_not_printed(monkeypatch):
-    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "super-secret")
+    monkeypatch.setenv("GEMINI_API_KEY", "super-secret")
 
     settings = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
 

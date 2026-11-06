@@ -13,7 +13,6 @@ TEST_ENV = {
     "GEMINI_API_KEY": "test-gemini-key",
     "GROQ_API_KEY": "test-groq-key",
     "SUPABASE_URL": "http://localhost:54321",
-    "SUPABASE_SERVICE_ROLE_KEY": "test-service-role-key",
     "DATABASE_URL": "postgresql://localhost/unused",
     "SUPABASE_JWT_SECRET": "test-jwt-secret-that-is-at-least-32-bytes-long",
 }
