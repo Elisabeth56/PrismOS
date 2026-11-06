@@ -19,11 +19,11 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: SecretStr
     GROQ_API_KEY: SecretStr
     GEMINI_MODEL: str = "gemini-3.5-flash"  # gemini-2.5-flash is deprecated and returns 404
-    GEMINI_FALLBACK_MODEL: str = "gemini-2.5-flash-lite"
+    GEMINI_FALLBACK_MODEL: str = "gemini-3.5-flash-lite"  # 2.5-flash-lite is closed to new keys
     GROQ_MODEL: str = "openai/gpt-oss-120b"
     LLM_TIMEOUT_SECONDS: float = Field(default=90, gt=0)
     # free tiers rate-limit per minute; waiting out the provider's hint beats failing over to a weaker model
-    LLM_MAX_RATE_LIMIT_WAIT_SECONDS: float = Field(default=30, ge=0)
+    LLM_MAX_RATE_LIMIT_WAIT_SECONDS: float = Field(default=60, ge=0)
 
     SUPABASE_URL: HttpUrl
     # direct Postgres connection (Supabase session pooler on IPv4 hosts); queries are scoped by membership in SQL

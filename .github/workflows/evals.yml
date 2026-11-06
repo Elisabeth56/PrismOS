@@ -43,17 +43,6 @@ jobs:
         run: |
           curl -sS -H "x-goog-api-key: $GEMINI_API_KEY" "https://generativelanguage.googleapis.com/v1beta/models?pageSize=200" \
             | jq -r '.models[]? | select(.supportedGenerationMethods | index("generateContent")) | .name' || true
-      - name: Probe (temporary)
-        run: |
-          for m in gemini-3.5-flash gemini-3.5-flash-lite gemini-flash-latest gemini-flash-lite-latest gemini-2.5-flash-lite gemini-3.1-flash-lite gemini-2.5-flash gemini-3-flash-preview; do
-            echo "== $m"
-            curl -sS -H "x-goog-api-key: $GEMINI_API_KEY" -H "content-type: application/json" \
-              "https://generativelanguage.googleapis.com/v1beta/models/$m:generateContent" \
-              -d '{"contents":[{"parts":[{"text":"Say ok"}]}]}' | jq -c '{status: .error.status, msg: (.error.message // "" | .[0:300]), ok: (.candidates != null)}'
-          done
-          curl -sS -H "Authorization: Bearer $GROQ_API_KEY" https://api.groq.com/openai/v1/chat/completions -H "content-type: application/json" \
-            -d '{"model":"openai/gpt-oss-120b","messages":[{"role":"user","content":"Say ok"}]}' -D - -o /dev/null | grep -i "ratelimit\|HTTP"
-          exit 1
       - run: uv run pytest evals/test_eval.py -s -p no:logging
       - uses: actions/upload-artifact@v4
         if: always()

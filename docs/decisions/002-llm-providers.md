@@ -21,7 +21,7 @@ and the landing page say so.
   so it skipped the fallback chain. Now any non-transient refusal skips that provider's other models and moves
   on; large calls end with Groq as a last resort. If every provider refuses, the run fails with
   `models_refused` and each provider's own explanation.
-- **Models.** `gemini-3.5-flash`, falling back to `gemini-2.5-flash-lite`, then `openai/gpt-oss-120b` on Groq.
+- **Models.** `gemini-3.5-flash`, falling back to `gemini-3.5-flash-lite`, then `openai/gpt-oss-120b` on Groq.
   All three are configurable per environment.
 - **Measured cost.** The first successful run used 16,481 input and 5,495 output tokens across 8 model calls,
   well under the 40-50K estimated before the build. Model time was about 80 seconds, half of it the build step.

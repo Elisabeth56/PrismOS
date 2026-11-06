@@ -127,9 +127,8 @@ async def _complete(
             if attempt == 2:
                 raise
             delay = _retry_delay(error)
-            logger.warning(
-                "llm transient error, retrying in %.0fs: model=%s error=%s", delay, model.name, type(error).__name__
-            )
+            detail = _rejection(error) if isinstance(error, openai.APIStatusError) else type(error).__name__
+            logger.warning("llm transient error, retrying in %.0fs: model=%s %s", delay, model.name, detail)
             await asyncio.sleep(delay)
             continue
         usage = Usage(

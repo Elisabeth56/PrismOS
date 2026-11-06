@@ -75,7 +75,7 @@ async def test_rate_limit_retries_once_then_falls_back_to_the_next_model(provide
     result, _ = await llm.generate([{"role": "user", "content": "check"}], Verdict)
 
     assert result.verdict == "verified"
-    assert calls == ["gemini-3.5-flash", "gemini-3.5-flash", "gemini-2.5-flash-lite"]
+    assert calls == ["gemini-3.5-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]
 
 
 async def test_small_calls_go_to_groq_first(provider):
@@ -165,4 +165,4 @@ async def test_a_retired_model_is_skipped_without_giving_up_on_its_provider(prov
 
     await llm.generate([{"role": "user", "content": "check"}], Verdict, size="small")
 
-    assert calls == ["openai/gpt-oss-120b", "openai/gpt-oss-120b", "gemini-2.5-flash-lite", "gemini-3.5-flash"]
+    assert calls == ["openai/gpt-oss-120b", "openai/gpt-oss-120b", "gemini-3.5-flash-lite", "gemini-3.5-flash"]
