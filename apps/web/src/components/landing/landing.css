@@ -1,0 +1,51 @@
+/* Landing-only motion. The prism is the signature moment; the rest is quiet reveals and demo cycling. */
+/* starts faintly visible rather than at 0, so the headline still counts as painted for LCP */
+@keyframes lp-sharpen { from { opacity: 0.12; filter: blur(6px); transform: translateY(10px); } to { opacity: 1; filter: none; transform: none; } }
+@keyframes lp-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes lp-draw { from { stroke-dashoffset: 420; } to { stroke-dashoffset: 0; } }
+@keyframes lp-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes lp-blink { 50% { opacity: 0; } }
+@keyframes lp-breathe { 0%, 100% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(8deg) scale(1.06); } }
+@keyframes lp-ping { 0% { box-shadow: 0 0 0 0 var(--action); } 100% { box-shadow: 0 0 0 8px transparent; } }
+
+.lp-w { display: inline-block; animation: lp-sharpen 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.lp-rise { animation: lp-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.lp-underline { stroke-dasharray: 420; animation: lp-draw 1.1s cubic-bezier(0.22, 1, 0.36, 1) 1s both; }
+.lp-caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: -0.18em; background: var(--action); animation: lp-blink 1s steps(1) infinite; }
+.lp-rail { transform-origin: left; animation: lp-fill 12s linear infinite; }
+.lp-ping { animation: lp-ping 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+
+.lp-card { opacity: 0.5; transform: translateX(10px); transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s; }
+.lp-card[data-lit='true'] { opacity: 1; transform: none; box-shadow: 0 0 0 1.5px var(--c), 0 16px 40px rgba(0, 0, 0, 0.3); }
+
+.lp-step { transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), background 0.6s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+.lp-step .lp-num { transition: color 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+.lp-step .lp-bar { transform-origin: left; transform: scaleX(0.18); opacity: 0.5; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s; }
+.lp-step[data-on='true'], .lp-step:hover { transform: translateY(-8px); background: var(--surface-2); box-shadow: var(--shadow-popover); }
+.lp-step[data-on='true'] .lp-num, .lp-step:hover .lp-num { color: var(--c); }
+.lp-step[data-on='true'] .lp-bar { transform: scaleX(1); opacity: 1; transition: transform 1.8s linear, opacity 0.3s; }
+.lp-step:hover .lp-bar { transform: scaleX(1); opacity: 1; }
+
+.lp-critic { transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.6s cubic-bezier(0.22, 1, 0.36, 1), background 0.6s; }
+.lp-critic .lp-blk { transition: border-radius 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+.lp-critic .lp-quote { transition: opacity 0.5s; }
+.lp-critic[data-on='true'], .lp-critic:hover { transform: translateY(-8px); background: rgba(20, 19, 21, 0.62); box-shadow: 0 0 0 1.5px var(--c), 0 24px 48px rgba(0, 0, 0, 0.28); }
+.lp-critic[data-on='true'] .lp-blk { border-radius: 50%; animation: lp-breathe 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.lp-critic:not([data-on='true']) .lp-quote { opacity: 0.55; }
+
+.lp-tile { transition: left 0.9s cubic-bezier(0.22, 1, 0.36, 1), top 0.9s cubic-bezier(0.22, 1, 0.36, 1), border-radius 0.9s cubic-bezier(0.22, 1, 0.36, 1), transform 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
+
+.lp-big span { display: inline-block; transition: color 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+.lp-big span:hover { color: var(--action); transform: translateY(-10px); }
+.lp-big:hover span:not(:hover) { color: var(--surface-3); }
+
+.lp-link { color: var(--ink-2); text-decoration: none; transition: color 0.2s; }
+.lp-link:hover { color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-w, .lp-rise, .lp-underline, .lp-rail, .lp-caret, .lp-ping, .lp-critic .lp-blk { animation: none !important; }
+  .lp-step, .lp-critic, .lp-tile, .lp-big span, .lp-step .lp-bar, .lp-card { transition: none !important; }
+}
+
+.lp-card { --half: 24px; }
+@media (min-width: 640px) { .lp-card { --half: 40px; } }

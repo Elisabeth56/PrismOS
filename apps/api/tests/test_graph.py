@@ -191,3 +191,19 @@ def test_actions_are_fitted_to_what_the_repo_has():
     ]
     fitted = fit_to_repo(changes, {"old.py"})
     assert [(c.path, c.action) for c in fitted] == [("new.py", "create"), ("old.py", "modify")]
+
+
+@needs_db
+async def test_the_planner_sees_what_earlier_runs_decided(pool, run_id, migrated_db_url):
+    with psycopg.connect(migrated_db_url, autocommit=True) as conn:
+        conn.execute(
+            """insert into memory_entries (project_id, kind, title, content)
+               select project_id, 'decision', 'Limits live in middleware.', 'Every login route shares one limiter.'
+               from runs where id = %s""",
+            (run_id,),
+        )
+    models = FakeModels()
+
+    await run(pool, models)
+
+    assert "Limits live in middleware." in models.prompts["Spec"]

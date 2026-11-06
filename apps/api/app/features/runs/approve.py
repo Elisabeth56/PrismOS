@@ -18,6 +18,7 @@ from app.features.runs.schemas import RunDetail
 from app.github.app import GitHubApp
 from app.github.pulls import FileWrite, open_pull_request
 from app.pipeline.context import append_event
+from app.pipeline.persist import remember_shipped
 
 TITLE_CHARS = 72
 
@@ -83,6 +84,14 @@ async def approve_run(
             (pr.url, pr.number, run_id),
         )
         await append_event(conn, str(run_id), "pr_opened", {"url": pr.url, "number": pr.number})
+        await remember_shipped(
+            conn,
+            str(detail.project_id),
+            str(run_id),
+            pr_title(run["feature_request"]),
+            steps.get("build", {}).get("summary") or run["feature_request"],
+            [(c.ruling, c.rationale or "") for c in detail.conflicts if c.ruling],
+        )
     return await get_run(conn, user_id, run_id)
 
 
