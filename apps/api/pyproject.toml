@@ -13,6 +13,8 @@ dependencies = [
   "openai>=1.60",
   "supabase>=2.12",
   "httpx>=0.28",
+  "pyjwt[crypto]>=2.10",
+  "psycopg[binary,pool]>=3.2",
 ]
 
 [dependency-groups]
