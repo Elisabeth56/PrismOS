@@ -167,7 +167,7 @@ async def stream_run(request: Request, session_id: str, db=Depends(get_db)):
         "X-Accel-Buffering": "no",
     }
     origin = request.headers.get("origin")
-    if origin and (origin in settings.cors_origins_list or "*" in settings.cors_origins_list):
+    if origin and (origin in settings.CORS_ORIGINS or "*" in settings.CORS_ORIGINS):
         headers["Access-Control-Allow-Origin"] = origin
         headers["Access-Control-Allow-Credentials"] = "true"
 

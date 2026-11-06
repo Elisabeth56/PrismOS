@@ -80,7 +80,7 @@ async def fetch_github_repo(github_url: str) -> dict[str, Any]:
     settings = get_settings()
     headers = {"Accept": "application/vnd.github.v3+json"}
     if settings.GITHUB_TOKEN:
-        headers["Authorization"] = f"token {settings.GITHUB_TOKEN}"
+        headers["Authorization"] = f"token {settings.GITHUB_TOKEN.get_secret_value()}"
 
     result: dict[str, Any] = {
         "owner": owner,
