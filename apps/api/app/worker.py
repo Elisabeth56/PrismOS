@@ -108,7 +108,13 @@ class Worker:
         """Marks the run failed with a message the user can act on; details stay in the logs."""
         logger.exception("run %s failed at %s", ctx.run_id, ctx.run.get("current_step"), exc_info=error)
         if isinstance(error, LLMUnavailable):
-            body = {"code": "models_unavailable", "message": "The AI providers are rate-limited or down. Retry later."}
+            refused = [r for r in error.reasons if "refused" in r]
+            body = {
+                "code": "models_refused" if refused else "models_unavailable",
+                "message": " ".join(refused)
+                if refused
+                else "The AI providers are rate-limited or down. Retry in a few minutes.",
+            }
         elif isinstance(error, RepoUnavailable):
             body = {
                 "code": "repo_unavailable",
@@ -117,7 +123,12 @@ class Worker:
         elif isinstance(error, LLMOutputInvalid):
             body = {"code": "model_output_invalid", "message": "A step returned unusable output twice. Retry the run."}
         else:
-            body = {"code": "step_failed", "message": "A step failed unexpectedly. Retry the run."}
+            # the exception's type (never its message, which can hold internals) narrows down what broke
+            body = {
+                "code": "step_failed",
+                "message": "A step failed unexpectedly. Retry the run.",
+                "kind": type(error).__name__,
+            }
         async with self.pool.connection() as conn:
             row = await (
                 await conn.execute(

@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # Free-tier model ids change; check them when deploying and override here.
     GEMINI_API_KEY: SecretStr
     GROQ_API_KEY: SecretStr
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-3.5-flash"  # gemini-2.5-flash is deprecated and returns 404
     GEMINI_FALLBACK_MODEL: str = "gemini-2.5-flash-lite"
     GROQ_MODEL: str = "openai/gpt-oss-120b"
     LLM_TIMEOUT_SECONDS: float = Field(default=90, gt=0)

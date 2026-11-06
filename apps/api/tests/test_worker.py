@@ -83,7 +83,7 @@ async def test_a_failing_step_fails_the_run_with_a_safe_message(pool, run_id, mi
 
 async def test_provider_outage_is_reported_as_such(pool, run_id, migrated_db_url):
     async def pipeline(ctx: RunContext) -> None:
-        raise LLMUnavailable("all down")
+        raise LLMUnavailable(["Gemini (gemini-3.5-flash): RateLimitError"])
 
     await Worker(pool, pipeline).tick()
 
@@ -165,3 +165,14 @@ async def test_concurrent_events_get_distinct_ordered_seqs(pool, run_id, migrate
     with psycopg.connect(migrated_db_url) as conn:
         seqs = [r[0] for r in conn.execute("select seq from run_events where run_id = %s order by seq", (run_id,))]
     assert seqs == list(range(1, 21))
+
+
+async def test_a_provider_refusal_tells_the_user_why(pool, run_id, migrated_db_url):
+    async def pipeline(ctx: RunContext) -> None:
+        raise LLMUnavailable(["Gemini refused the request: 400 User location is not supported"])
+
+    await Worker(pool, pipeline).tick()
+
+    error = run_row(migrated_db_url, run_id)["error"]
+    assert error["code"] == "models_refused"
+    assert "User location is not supported" in error["message"]
