@@ -19,6 +19,18 @@ from app.ai.llm import Usage
 from app.database import Conn
 
 
+async def append_event(conn: Conn, run_id: str, type_: str, payload: dict[str, Any] | None = None) -> None:
+    """Appends an event to the run's ordered stream."""
+    async with conn.transaction():
+        # critics run in parallel, so steps of one run can emit at the same moment: take turns per run
+        await conn.execute("select pg_advisory_xact_lock(hashtextextended(%s, 0))", (run_id,))
+        await conn.execute(
+            """insert into run_events (run_id, seq, type, payload)
+               select %s, coalesce(max(seq), 0) + 1, %s, %s from run_events where run_id = %s""",
+            (run_id, type_, json.dumps(payload or {}), run_id),
+        )
+
+
 class RunCancelled(Exception):
     """The user cancelled the run; the pipeline stops at the next step boundary."""
 
@@ -33,15 +45,8 @@ class RunContext:
         return str(self.run["id"])
 
     async def emit(self, type_: str, payload: dict[str, Any] | None = None) -> None:
-        """Appends an event to the run's ordered stream."""
-        async with self.pool.connection() as conn, conn.transaction():
-            # critics run in parallel, so steps of one run can emit at the same moment: take turns per run
-            await conn.execute("select pg_advisory_xact_lock(hashtextextended(%s, 0))", (self.run_id,))
-            await conn.execute(
-                """insert into run_events (run_id, seq, type, payload)
-                   select %s, coalesce(max(seq), 0) + 1, %s, %s from run_events where run_id = %s""",
-                (self.run_id, type_, json.dumps(payload or {}), self.run_id),
-            )
+        async with self.pool.connection() as conn:
+            await append_event(conn, self.run_id, type_, payload)
 
     async def ensure_not_cancelled(self) -> None:
         async with self.pool.connection() as conn:
