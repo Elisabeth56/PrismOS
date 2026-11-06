@@ -12,7 +12,7 @@ const publicSchema = z.object({
   // the publishable (anon) key; safe in the browser because RLS decides what it can read
   NEXT_PUBLIC_SUPABASE_ANON_KEY: withLocalDefault('local-anon-key'),
   // the GitHub App's URL name, for the "Install the GitHub App" link
-  NEXT_PUBLIC_GITHUB_APP_SLUG: z.string().min(1).default('prismos-app'),
+  NEXT_PUBLIC_GITHUB_APP_SLUG: z.string().min(1).default('prismos-review'),
 })
 
 // Next inlines NEXT_PUBLIC_ values at build time, so each one is read by its full name
