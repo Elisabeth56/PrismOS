@@ -17,6 +17,6 @@ export function ErrorPanel({ error, onRetry }: { error: ApiError; onRetry?: () =
   )
 }
 
-export function Skeleton({ className = '' }: { className?: string }) {
-  return <span aria-hidden className={`block rounded-[8px] bg-surface-3 ${className}`} />
+export function Skeleton({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
+  return <span aria-hidden style={style} className={`block rounded-[8px] ${className.includes('bg-') ? '' : 'bg-surface-3'} ${className}`} />
 }
