@@ -1,10 +1,11 @@
-"""What the pipeline needs from a repository. The GitHub implementation lives in app/github (#11, #6);
+"""What the pipeline needs from a repository. The GitHub implementation is app/github/repo.py;
 tests pass an in-memory one.
 """
 
 from __future__ import annotations
 
-from typing import Protocol
+from collections.abc import Callable
+from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
 
@@ -18,11 +19,20 @@ class RepoSnapshot(BaseModel):
 
 class RepoFiles(BaseModel):
     files: dict[str, str]
+    omitted: list[str] = Field(
+        default_factory=list, description="Selected but left out: too big, binary or over the cap."
+    )
 
 
 class RepoSource(Protocol):
-    async def snapshot(self, repo: str, branch: str) -> RepoSnapshot: ...
+    async def snapshot(self, branch: str) -> RepoSnapshot: ...
 
-    async def read(self, repo: str, commit_sha: str, paths: list[str]) -> dict[str, str]:
-        """Contents of the given paths. Missing, binary or oversized files are left out."""
-        ...
+    async def read(self, commit_sha: str, paths: list[str]) -> RepoFiles: ...
+
+
+RepoFor = Callable[[dict[str, Any]], RepoSource]
+"""Builds the source for one project row (repo_full_name, github_installation_id)."""
+
+
+class RepoUnavailable(Exception):
+    """The branch doesn't exist or PrismOS can't read the repository."""
