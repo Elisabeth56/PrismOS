@@ -6,7 +6,7 @@ features to code that already exists.
 
 ![The PrismOS landing page: a light aimed into a glass prism splits into three critic colours](docs/images/landing.png)
 
-**Live:** [prism-os-jade.vercel.app](https://prism-os-jade.vercel.app) · **Decisions:** [docs/decisions](docs/decisions) · **Case study:** [docs/case-study.md](docs/case-study.md)
+**Live:** [prism-os-jade.vercel.app](https://prism-os-jade.vercel.app) · **[Try the demo](https://prism-os-jade.vercel.app/demo)** (read-only, no sign-up) · **Decisions:** [docs/decisions](docs/decisions) · **Case study:** [docs/case-study.md](docs/case-study.md)
 
 ## The problem
 
@@ -109,7 +109,10 @@ coverage and verifier agreement, against a single-prompt baseline) is not built 
 - **API:** FastAPI on Python 3.12, psycopg 3, Pydantic, LangGraph for the pipeline graph.
 - **Data:** Supabase Postgres with RLS, Auth (GitHub) and Realtime.
 - **Models:** Gemini Flash for large calls, Groq for small ones, both on free tiers through the OpenAI-compatible API.
-- **Infra:** Vercel (web), Render (API and worker, Docker), GitHub Actions (CI and a keep-warm ping).
+- **Infra:** Vercel (web), Render (API and worker, Docker), GitHub Actions (CI, a keep-warm ping and Lighthouse).
+
+The landing page scores 99 for performance and 100 for accessibility, best practices and SEO in mobile
+Lighthouse on production (median of three runs; the `lighthouse` workflow re-measures it on every web change).
 
 ## Run locally
 
@@ -118,7 +121,7 @@ Requires Node 22 with pnpm 10, Python 3.12+ with [uv](https://docs.astral.sh/uv/
 ```bash
 pnpm install
 cd apps/api && uv sync && cd ../..
-pnpm db:start && pnpm db:reset      # local Supabase with the schema and a demo account
+pnpm db:start && pnpm db:reset      # local Supabase with the schema and the read-only demo account
 cp apps/web/.env.example apps/web/.env.local
 cp apps/api/.env.example apps/api/.env   # add GEMINI_API_KEY and GROQ_API_KEY
 pnpm dev                            # web on :3000, API on :8000
@@ -141,7 +144,6 @@ Without GitHub App credentials the API reads public repos only and can't open PR
 ## Limitations and next steps
 
 - **No eval harness yet**, so quality claims rest on tests and one live run. It's the next thing to build.
-- **No reviewer demo account on the live site**; reviewers sign in with GitHub. The seed has one for local use.
 - **File selection is one model call over the tree.** Large monorepos need an index (pgvector, hybrid search).
 - **Free-tier limits.** Gemini's free tier may use inputs for training, and daily request limits cap volume
   at roughly 200 runs a day. Bring-your-own-key is the fix.
