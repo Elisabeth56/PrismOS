@@ -31,7 +31,6 @@
 .lp-critic .lp-quote { transition: opacity 0.5s; }
 .lp-critic[data-on='true'], .lp-critic:hover { transform: translateY(-8px); background: rgba(20, 19, 21, 0.62); box-shadow: 0 0 0 1.5px var(--c), 0 24px 48px rgba(0, 0, 0, 0.28); }
 .lp-critic[data-on='true'] .lp-blk { border-radius: 50%; animation: lp-breathe 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
-.lp-critic:not([data-on='true']) .lp-quote { opacity: 0.55; }
 
 .lp-tile { transition: left 0.9s cubic-bezier(0.22, 1, 0.36, 1), top 0.9s cubic-bezier(0.22, 1, 0.36, 1), border-radius 0.9s cubic-bezier(0.22, 1, 0.36, 1), transform 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
 
