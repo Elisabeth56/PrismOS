@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
 
-import { Button } from '@/components/ui'
+import { Button, ButtonLink } from '@/components/ui'
 import { safeNext } from '@/lib/safe-next'
 import { createClient } from '@/lib/supabase/client'
 
@@ -39,6 +39,9 @@ function SignIn() {
         <Button variant="primary" size="lg" onClick={signInWithGitHub} disabled={pending}>
           {pending ? 'Opening GitHub…' : 'Continue with GitHub'}
         </Button>
+        <ButtonLink href="/demo" prefetch={false} size="lg">
+          Look around the demo first
+        </ButtonLink>
         {error && (
           <p role="alert" className="text-oxblood-text">
             {error}

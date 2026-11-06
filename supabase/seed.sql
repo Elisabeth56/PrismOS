@@ -1,5 +1,5 @@
 -- Local and preview seed: a demo account, the sample project, and one finished run so every screen has data.
--- Demo sign-in: demo@prismos.dev / prismos-demo (public on purpose; it can only see the sample project).
+-- Demo sign-in: demo@prismos.dev / prismos-demo (public on purpose; read-only, and it can only see the sample project).
 
 do $$
 declare
@@ -12,7 +12,7 @@ begin
                           raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
   values ('00000000-0000-0000-0000-000000000000', demo, 'authenticated', 'authenticated', 'demo@prismos.dev',
           extensions.crypt('prismos-demo', extensions.gen_salt('bf')), now(),
-          '{"provider": "email", "providers": ["email"]}', '{"user_name": "demo"}', now(), now());
+          '{"provider": "email", "providers": ["email"], "read_only": true}', '{"user_name": "demo"}', now(), now());
 
   insert into auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   values (gen_random_uuid(), demo, demo::text,

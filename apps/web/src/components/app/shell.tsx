@@ -12,6 +12,7 @@ import { PROJECTS_CHANGED } from '@/lib/projects-changed'
 import { useApi } from '@/lib/use-api'
 
 import { AccountProvider, Avatar, type Account } from './account'
+import { DemoBanner } from './demo-banner'
 
 /** The app frame: projects on the left, one view on the right. ⌘K starts a new run from anywhere. */
 export function Shell({ account, children }: { account: Account; children: React.ReactNode }) {
@@ -25,7 +26,7 @@ export function Shell({ account, children }: { account: Account; children: React
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      if (!account.readOnly && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
         router.push('/runs/new')
       }
@@ -38,7 +39,7 @@ export function Shell({ account, children }: { account: Account; children: React
       window.removeEventListener('keydown', onKey)
       window.removeEventListener(PROJECTS_CHANGED, onProjectsChanged)
     }
-  }, [router, reload])
+  }, [router, reload, account.readOnly])
 
   const navItem = (active: boolean) =>
     `flex items-center justify-between gap-2 truncate rounded-[8px] px-2 py-1.5 ${
@@ -51,9 +52,11 @@ export function Shell({ account, children }: { account: Account; children: React
         <PrismMark size={20} />
         PrismOS
       </Link>
-      <ButtonLink href="/runs/new" variant="primary" className="justify-between" shortcut="⌘K">
-        New run
-      </ButtonLink>
+      {!account.readOnly && (
+        <ButtonLink href="/runs/new" variant="primary" className="justify-between" shortcut="⌘K">
+          New run
+        </ButtonLink>
+      )}
       <nav aria-label="Projects" className="flex flex-col gap-1">
         <Link href="/projects" aria-current={path === '/projects' ? 'page' : undefined} className={navItem(path === '/projects')}>
           <span className="text-[12px] leading-4 font-medium tracking-[0.02em]">All projects</span>
@@ -70,9 +73,11 @@ export function Shell({ account, children }: { account: Account; children: React
             </Link>
           )
         })}
-        <ButtonLink href="/projects/new" size="sm" variant="ghost" className="mt-1 justify-start">
-          + New project
-        </ButtonLink>
+        {!account.readOnly && (
+          <ButtonLink href="/projects/new" size="sm" variant="ghost" className="mt-1 justify-start">
+            + New project
+          </ButtonLink>
+        )}
       </nav>
       <div className="mt-auto flex flex-col gap-2">
         <Link href="/profile" aria-current={path === '/profile' ? 'page' : undefined} className={`${navItem(path === '/profile')} !justify-start`}>
@@ -101,7 +106,10 @@ export function Shell({ account, children }: { account: Account; children: React
         <aside className="sticky top-0 hidden h-dvh w-[260px] flex-none flex-col gap-6 bg-surface-1 px-4 py-5 md:flex">
           {sidebar}
         </aside>
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1">
+          {account.readOnly && <DemoBanner />}
+          {children}
+        </main>
       </div>
     </AccountProvider>
   )

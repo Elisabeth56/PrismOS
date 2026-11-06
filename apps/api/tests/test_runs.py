@@ -11,7 +11,7 @@ from psycopg.rows import DictRow, dict_row
 from app.database import get_conn
 from app.main import app
 from tests.conftest import needs_db
-from tests.factories import bearer, make_project, make_run, make_user
+from tests.factories import bearer, make_project, make_run, make_user, token
 
 pytestmark = needs_db
 
@@ -187,3 +187,21 @@ def test_someone_elses_run_cant_be_retried(client, owner, migrated_db_url):
     user, project = owner
     run = make_run(migrated_db_url, project, user, status="failed")
     assert client.post(f"/api/v1/runs/{run}/retry", headers=bearer(make_user(migrated_db_url))).status_code == 404
+
+
+def test_read_only_accounts_can_look_but_not_change_anything(client, owner, migrated_db_url):
+    user, project = owner
+    run = make_run(migrated_db_url, project, user, status="failed")
+    demo = {"Authorization": f"Bearer {token(user, app_metadata={'read_only': True})}"}
+
+    assert client.get(f"/api/v1/runs/{run}", headers=demo).status_code == 200
+    assert client.get(f"/api/v1/projects/{project}/runs", headers=demo).status_code == 200
+    writes = [
+        client.post("/api/v1/runs", json={"project_id": project, "feature_request": REQUEST}, headers=demo),
+        client.post(f"/api/v1/runs/{run}/retry", headers=demo),
+        client.post(f"/api/v1/runs/{run}/cancel", headers=demo),
+        client.post(f"/api/v1/runs/{run}/approve", headers=demo),
+        client.patch(f"/api/v1/projects/{project}", json={"name": "renamed"}, headers=demo),
+        client.delete(f"/api/v1/projects/{project}", headers=demo),
+    ]
+    assert [(w.status_code, w.json()["error"]["code"]) for w in writes] == [(403, "demo_read_only")] * len(writes)

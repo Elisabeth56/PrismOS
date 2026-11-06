@@ -104,3 +104,14 @@ def test_one_decision_per_conflict(db):
             "insert into decisions (conflict_id, run_id, ruling, rationale) values (%s, %s, 'again', 'again')",
             (DEMO_CONFLICT, DEMO_RUN),
         )
+
+
+def test_read_only_accounts_keep_their_sign_in(db):
+    user = uuid.uuid4()
+    db.execute(
+        "insert into auth.users (id, email, encrypted_password, raw_app_meta_data) values (%s, %s, 'x', %s)",
+        (user, f"{user}@example.com", '{"read_only": true}'),
+    )
+    db.execute("update auth.users set updated_at = now() where id = %s", (user,))  # signing in still works
+    with pytest.raises(errors.InsufficientPrivilege):
+        db.execute("update auth.users set encrypted_password = 'y' where id = %s", (user,))

@@ -120,7 +120,7 @@ export default function Profile() {
           >
             Manage repositories
           </a>
-          <ButtonLink href="/projects/new">New project</ButtonLink>
+          {!account.readOnly && <ButtonLink href="/projects/new">New project</ButtonLink>}
         </div>
       </section>
 

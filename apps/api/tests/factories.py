@@ -11,8 +11,10 @@ import psycopg
 from tests.conftest import TEST_ENV
 
 
-def token(sub: str, *, aud: str = "authenticated", expires_in: int = 3600, key: str | None = None) -> str:
-    claims = {"sub": sub, "aud": aud, "exp": int(time.time()) + expires_in}
+def token(
+    sub: str, *, aud: str = "authenticated", expires_in: int = 3600, key: str | None = None, **extra: object
+) -> str:
+    claims = {"sub": sub, "aud": aud, "exp": int(time.time()) + expires_in, **extra}
     return jwt.encode(claims, key or TEST_ENV["SUPABASE_JWT_SECRET"], algorithm="HS256")
 
 

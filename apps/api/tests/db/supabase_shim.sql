@@ -31,6 +31,7 @@ create table if not exists auth.users (
   role text,
   email text unique,
   encrypted_password text,
+  email_change text,
   email_confirmed_at timestamptz,
   raw_app_meta_data jsonb,
   raw_user_meta_data jsonb,
