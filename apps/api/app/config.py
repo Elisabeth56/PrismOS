@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     GEMINI_FALLBACK_MODEL: str = "gemini-2.5-flash-lite"
     GROQ_MODEL: str = "openai/gpt-oss-120b"
     LLM_TIMEOUT_SECONDS: float = Field(default=90, gt=0)
+    # free tiers rate-limit per minute; waiting out the provider's hint beats failing over to a weaker model
+    LLM_MAX_RATE_LIMIT_WAIT_SECONDS: float = Field(default=30, ge=0)
 
     SUPABASE_URL: HttpUrl
     # direct Postgres connection (Supabase session pooler on IPv4 hosts); queries are scoped by membership in SQL
