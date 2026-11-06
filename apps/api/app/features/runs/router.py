@@ -44,6 +44,12 @@ async def cancel_run(run_id: UUID, user: User = Depends(current_user), conn: Con
     return await logic.cancel_run(conn, user.id, run_id)
 
 
+@router.post("/runs/{run_id}/retry", response_model=RunOut)
+async def retry_run(run_id: UUID, user: User = Depends(current_user), conn: Conn = Depends(get_conn)):
+    """Resumes a failed or cancelled run from its first unfinished step."""
+    return await logic.retry_run(conn, user.id, run_id)
+
+
 @router.post("/runs/{run_id}/approve", response_model=RunDetail)
 async def approve(
     run_id: UUID,

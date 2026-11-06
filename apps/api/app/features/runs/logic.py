@@ -10,6 +10,7 @@ from app.database import Conn
 from app.errors import AppError
 from app.features.projects.logic import get_project
 from app.features.runs.schemas import RunCreate, RunDetail, RunEventOut, RunOut, RunSummary
+from app.pipeline.context import append_event
 
 RUN_COLUMNS = """r.id, r.project_id, r.feature_request, r.base_branch, r.status::text as status, r.current_step,
                  r.verdict, r.pr_url, r.pr_number, r.error, r.tokens_in, r.tokens_out,
@@ -116,6 +117,28 @@ async def cancel_run(conn: Conn, user_id: str, run_id: UUID) -> RunOut:
     if existing is None:
         raise NOT_FOUND
     raise AppError(409, "run_finished", f"This run is already {existing['status'].replace('_', ' ')}.")
+
+
+async def retry_run(conn: Conn, user_id: str, run_id: UUID) -> RunOut:
+    """Queues a failed or cancelled run again. Finished steps stay cached, so it resumes where it stopped."""
+    row = await (
+        await conn.execute(
+            f"""update runs r set status = 'queued', attempts = 0, error = null, current_step = null,
+                       finished_at = null, heartbeat_at = null
+                from project_members m
+                where r.id = %(run_id)s and m.project_id = r.project_id and m.user_id = %(user_id)s
+                  and r.status in ('failed', 'cancelled')
+                returning {RUN_COLUMNS}""",
+            {"user_id": user_id, "run_id": run_id},
+        )
+    ).fetchone()
+    if row is not None:
+        await append_event(conn, str(run_id), "run_retried")
+        return RunOut.model_validate(row)
+    existing = await (await conn.execute(MEMBER_RUN, {"user_id": user_id, "run_id": run_id})).fetchone()
+    if existing is None:
+        raise NOT_FOUND
+    raise AppError(409, "run_not_retryable", "Only a failed or cancelled run can be retried.")
 
 
 async def list_events(conn: Conn, user_id: str, run_id: UUID, after: int = 0, limit: int = 500) -> list[RunEventOut]:

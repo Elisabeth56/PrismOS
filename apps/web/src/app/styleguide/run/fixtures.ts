@@ -110,3 +110,17 @@ export const review: RunDetail = {
     { path: 'app/features/auth/router.py', action: 'modify', content: AUTH_AFTER },
   ],
 }
+
+export const failed: RunDetail = {
+  ...review,
+  status: 'failed',
+  verdict: null,
+  current_step: null,
+  error: {
+    code: 'model_output_invalid',
+    step: 'build',
+    message: "The model returned changes that didn't match the expected format twice in a row, so PrismOS stopped instead of guessing.",
+  },
+  steps: Object.fromEntries(Object.entries(review.steps).filter(([key]) => !['build', 'verify'].includes(key))),
+  changes: [],
+}

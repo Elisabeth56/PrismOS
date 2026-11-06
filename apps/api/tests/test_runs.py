@@ -2,6 +2,7 @@
 
 from collections.abc import AsyncIterator, Iterator
 
+import psycopg
 import pytest
 from fastapi.testclient import TestClient
 from psycopg import AsyncConnection
@@ -153,3 +154,36 @@ def test_events_replay_after_a_sequence_number(client, owner, migrated_db_url):
     assert [e["type"] for e in after_first] == ["step_started", "step_done"]
     outsider = make_user(migrated_db_url)
     assert client.get(f"/api/v1/runs/{run}/events", headers=bearer(outsider)).status_code == 404
+
+
+@needs_db
+def test_a_failed_run_is_queued_again_with_a_clean_slate(client, owner, migrated_db_url):
+    user, project = owner
+    run = make_run(
+        migrated_db_url, project, user, status="failed", attempts=3, error='{"code": "step_failed", "step": "build"}'
+    )
+
+    response = client.post(f"/api/v1/runs/{run}/retry", headers=bearer(user))
+
+    assert response.status_code == 200
+    body = response.json()
+    assert (body["status"], body["error"]) == ("queued", None)
+    with psycopg.connect(migrated_db_url) as conn:
+        assert conn.execute("select attempts from runs where id = %s", (run,)).fetchone() == (0,)
+        assert conn.execute("select type from run_events where run_id = %s", (run,)).fetchall() == [("run_retried",)]
+
+
+@needs_db
+@pytest.mark.parametrize(("status", "code"), [("running", 409), ("awaiting_approval", 409)])
+def test_only_stopped_runs_can_be_retried(client, owner, migrated_db_url, status, code):
+    user, project = owner
+    run = make_run(migrated_db_url, project, user, status=status)
+    response = client.post(f"/api/v1/runs/{run}/retry", headers=bearer(user))
+    assert (response.status_code, response.json()["error"]["code"]) == (code, "run_not_retryable")
+
+
+@needs_db
+def test_someone_elses_run_cant_be_retried(client, owner, migrated_db_url):
+    user, project = owner
+    run = make_run(migrated_db_url, project, user, status="failed")
+    assert client.post(f"/api/v1/runs/{run}/retry", headers=bearer(make_user(migrated_db_url))).status_code == 404
