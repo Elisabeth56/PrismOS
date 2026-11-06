@@ -36,6 +36,10 @@ export interface Run {
   finished_at: string | null
 }
 
+export interface RunSummary extends Run {
+  conflict_count: number
+}
+
 export interface Objection {
   critic: Critic
   item_id: string
@@ -130,7 +134,7 @@ export const api = {
       github: true,
       body: JSON.stringify({ installation_id: repo.installation_id, repo_full_name: repo.full_name }),
     }),
-  runs: (projectId: string) => request<Run[]>(`/projects/${projectId}/runs`),
+  runs: (projectId: string) => request<RunSummary[]>(`/projects/${projectId}/runs`),
   run: (id: string) => request<RunDetail>(`/runs/${id}`),
   startRun: (body: {
     project_id: string
