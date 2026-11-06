@@ -77,12 +77,18 @@ def test_clients_cannot_write(db):
 @pytest.mark.parametrize(
     ("query", "error"),
     [
-        ("insert into changes (run_id, path, action, content) values (%s, 'x.py', 'delete', 'leftover')",
-         errors.CheckViolation),
-        ("insert into changes (run_id, path, action, content) values (%s, '../etc/passwd', 'create', 'x')",
-         errors.CheckViolation),
-        ("insert into changes (run_id, path, action, content) values (%s, '.git/config', 'create', 'x')",
-         errors.CheckViolation),
+        (
+            "insert into changes (run_id, path, action, content) values (%s, 'x.py', 'delete', 'leftover')",
+            errors.CheckViolation,
+        ),
+        (
+            "insert into changes (run_id, path, action, content) values (%s, '../etc/passwd', 'create', 'x')",
+            errors.CheckViolation,
+        ),
+        (
+            "insert into changes (run_id, path, action, content) values (%s, '.git/config', 'create', 'x')",
+            errors.CheckViolation,
+        ),
         ("update runs set status = 'pr_opened' where id = %s", errors.CheckViolation),
         ("update runs set verdict = 'shippable' where id = %s", errors.CheckViolation),
     ],

@@ -135,3 +135,21 @@ def test_cancelling_stops_a_queued_run_once(client, owner, migrated_db_url):
     assert first.json()["status"] == "cancelled"
     assert again.status_code == 409
     assert again.json()["error"]["code"] == "run_finished"
+
+
+def test_events_replay_after_a_sequence_number(client, owner, migrated_db_url):
+    import psycopg
+
+    user, project = owner
+    run = make_run(migrated_db_url, project, user)
+    with psycopg.connect(migrated_db_url, autocommit=True) as conn:
+        for seq, kind in enumerate(["run_started", "step_started", "step_done"], start=1):
+            conn.execute("insert into run_events (run_id, seq, type) values (%s, %s, %s)", (run, seq, kind))
+
+    everything = client.get(f"/api/v1/runs/{run}/events", headers=bearer(user)).json()
+    after_first = client.get(f"/api/v1/runs/{run}/events?after=1", headers=bearer(user)).json()
+
+    assert [e["seq"] for e in everything] == [1, 2, 3]
+    assert [e["type"] for e in after_first] == ["step_started", "step_done"]
+    outsider = make_user(migrated_db_url)
+    assert client.get(f"/api/v1/runs/{run}/events", headers=bearer(outsider)).status_code == 404
