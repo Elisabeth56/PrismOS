@@ -16,6 +16,16 @@ export interface Project {
   role: 'owner' | 'member'
   created_at: string
   last_run_at: string | null
+  run_count: number
+}
+
+export interface ActivityItem {
+  run_id: string
+  run_title: string
+  seq: number
+  type: string
+  payload: Record<string, unknown>
+  created_at: string
 }
 
 export interface Run {
@@ -112,6 +122,7 @@ async function request<T>(path: string, init: RequestInit & { github?: boolean }
     // the free API host sleeps when idle; the first request after that can take ~30s or fail outright
     throw new ApiError(0, 'api_unreachable', "Can't reach the PrismOS server. It may be waking up; try again in a moment.")
   }
+  if (response.status === 204) return undefined as T
   if (response.ok) return response.json() as Promise<T>
   const body = await response.json().catch(() => null)
   throw new ApiError(
@@ -124,6 +135,10 @@ async function request<T>(path: string, init: RequestInit & { github?: boolean }
 export const api = {
   projects: () => request<Project[]>('/projects'),
   project: (id: string) => request<Project>(`/projects/${id}`),
+  updateProject: (id: string, body: { name?: string; default_branch?: string }) =>
+    request<Project>(`/projects/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  removeProject: (id: string) => request<void>(`/projects/${id}`, { method: 'DELETE' }),
+  activity: (id: string) => request<ActivityItem[]>(`/projects/${id}/activity`),
   installedRepos: () => request<InstalledRepo[]>('/repositories', { github: true }),
   attachRepo: (repo: InstalledRepo) =>
     request<Project>('/projects', {

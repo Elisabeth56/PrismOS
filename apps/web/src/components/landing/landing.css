@@ -49,3 +49,32 @@
 
 .lp-card { --half: 24px; }
 @media (min-width: 640px) { .lp-card { --half: 40px; } }
+
+/* step card pictures: rest on the finished frame, replay whenever the card becomes the active step */
+@keyframes lp-write-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes lp-pop-in { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.35); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes lp-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes lp-scan-in { from { transform: scaleX(0.1); opacity: 0.3; } to { transform: scaleX(1); opacity: 1; } }
+@keyframes lp-left-in { from { transform: translateX(-30%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes lp-right-in { from { transform: translateX(30%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes lp-decide-in { 0%, 45% { transform: translateY(14px) scale(0.92); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes lp-line-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+@keyframes lp-check-in { 0%, 60% { transform: scale(0.6); opacity: 0; } 85% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+
+.lp-vis .lp-write { transform-origin: left; }
+.lp-vis .lp-scan { transform-origin: left; }
+.lp-step[data-on='true'] .lp-write { animation: lp-write-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.lp-step[data-on='true'] .lp-pop { animation: lp-pop-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.lp-step[data-on='true'] .lp-fade { animation: lp-fade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.lp-step[data-on='true'] .lp-scan { animation: lp-scan-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.lp-step[data-on='true'] .lp-left { animation: lp-left-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.lp-step[data-on='true'] .lp-right { animation: lp-right-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both; }
+.lp-step[data-on='true'] .lp-decide { animation: lp-decide-in 1.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.lp-step[data-on='true'] .lp-line { animation: lp-line-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.lp-step[data-on='true'] .lp-check { animation: lp-check-in 1.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.lp-vis { transition: background 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+.lp-step[data-on='true'] .lp-vis, .lp-step:hover .lp-vis { background: var(--surface-3); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-step .lp-vis * { animation: none !important; }
+}

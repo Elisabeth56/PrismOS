@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { use, useEffect } from 'react'
 
 import { ErrorPanel, Skeleton } from '@/components/app/page-states'
@@ -29,7 +30,30 @@ export default function RunPage({ params }: { params: Promise<{ runId: string }>
     )
   }
   if (!run.data) return <RunSkeleton />
-  return <RunBody run={run.data} onChange={run.setData} />
+  return (
+    <>
+      <ProjectTrail projectId={run.data.project_id} />
+      <RunBody run={run.data} onChange={run.setData} />
+    </>
+  )
+}
+
+/** Runs belong to a project: show which one, with a way back to its workspace. */
+function ProjectTrail({ projectId }: { projectId: string }) {
+  const project = useApi(() => api.project(projectId), `project-${projectId}`)
+  return (
+    <nav aria-label="Breadcrumb" className="flex items-center gap-2 px-4 pt-6 text-[12px] text-ink-3 sm:px-8">
+      <Link href="/projects" className="hover:text-ink">
+        Projects
+      </Link>
+      <span aria-hidden>/</span>
+      <Link href={`/projects/${projectId}`} className="truncate hover:text-ink">
+        {project.data?.name ?? 'Project'}
+      </Link>
+      <span aria-hidden>/</span>
+      <span className="text-ink-2">Run</span>
+    </nav>
+  )
 }
 
 /** Matches the run layout, so nothing jumps when it loads. On the free tier the first load can wake the server. */

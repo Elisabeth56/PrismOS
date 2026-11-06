@@ -8,6 +8,7 @@ import { ErrorPanel, Skeleton } from '@/components/app/page-states'
 import { Button } from '@/components/ui'
 import { api, ApiError, type InstalledRepo } from '@/lib/api'
 import { env } from '@/lib/env'
+import { announceProjectsChanged } from '@/lib/projects-changed'
 import { useApi } from '@/lib/use-api'
 
 const INSTALL_URL = `https://github.com/apps/${env.NEXT_PUBLIC_GITHUB_APP_SLUG}/installations/new`
@@ -32,9 +33,10 @@ export default function Connect() {
     setPending(repo.full_name)
     setError('')
     try {
-      await api.attachRepo(repo)
-      // straight to the thing they came to do
-      router.push('/runs/new')
+      const project = await api.attachRepo(repo)
+      announceProjectsChanged()
+      // straight to the thing they came to do, inside the new project
+      router.push(`/projects/${project.id}/runs/new`)
       router.refresh()
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Something went wrong. Try again.')

@@ -6,13 +6,14 @@ from uuid import UUID
 
 from app.database import Conn
 from app.errors import AppError
-from app.features.projects.schemas import ProjectCreate, ProjectOut
+from app.features.projects.schemas import ActivityItem, ProjectCreate, ProjectOut, ProjectUpdate
 from app.github.app import InstalledRepo
 
 # the membership join is the access check: a project you don't belong to doesn't exist for you
 _SELECT = """
     select p.id, p.name, p.repo_full_name, p.default_branch, m.role::text as role, p.created_at,
-           (select max(r.created_at) from runs r where r.project_id = p.id) as last_run_at
+           (select max(r.created_at) from runs r where r.project_id = p.id) as last_run_at,
+           (select count(*) from runs r where r.project_id = p.id) as run_count
     from projects p
     join project_members m on m.project_id = p.id and m.user_id = %(user_id)s
 """
@@ -80,3 +81,42 @@ async def create_project(conn: Conn, user_id: str, body: ProjectCreate, reachabl
             "insert into project_members (project_id, user_id, role) values (%s, %s, 'owner')", (row["id"], user_id)
         )
     return await get_project(conn, user_id, row["id"])
+
+
+async def _require_owner(conn: Conn, user_id: str, project_id: UUID) -> None:
+    project = await get_project(conn, user_id, project_id)
+    if project.role != "owner":
+        raise AppError(403, "not_project_owner", "Only the project's owner can change or remove it.")
+
+
+async def update_project(conn: Conn, user_id: str, project_id: UUID, body: ProjectUpdate) -> ProjectOut:
+    await _require_owner(conn, user_id, project_id)
+    changes = body.model_dump(exclude_none=True)
+    if changes:
+        await conn.execute(
+            """update projects set name = coalesce(%(name)s, name),
+                                   default_branch = coalesce(%(default_branch)s, default_branch)
+               where id = %(project_id)s""",
+            {"name": changes.get("name"), "default_branch": changes.get("default_branch"), "project_id": project_id},
+        )
+    return await get_project(conn, user_id, project_id)
+
+
+async def delete_project(conn: Conn, user_id: str, project_id: UUID) -> None:
+    """Removes the project and its runs from PrismOS. The repository and any opened PRs are untouched."""
+    await _require_owner(conn, user_id, project_id)
+    await conn.execute("delete from projects where id = %s", (project_id,))
+
+
+async def list_activity(conn: Conn, user_id: str, project_id: UUID, limit: int = 100) -> list[ActivityItem]:
+    await get_project(conn, user_id, project_id)
+    rows = await (
+        await conn.execute(
+            """select e.run_id, r.feature_request as run_title, e.seq, e.type, e.payload, e.created_at
+               from run_events e join runs r on r.id = e.run_id
+               where r.project_id = %s
+               order by e.created_at desc, e.seq desc limit %s""",
+            (project_id, limit),
+        )
+    ).fetchall()
+    return [ActivityItem.model_validate(row) for row in rows]
