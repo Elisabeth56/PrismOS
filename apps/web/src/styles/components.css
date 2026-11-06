@@ -13,6 +13,8 @@
 
 .px-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
+/* in the components layer so Tailwind utilities (hidden, h-10, ...) can override these */
+@layer components {
 /* Button */
 .px-btn {
   display: inline-flex; align-items: center; gap: var(--space-2);
@@ -142,3 +144,4 @@
 .px-verdict p { margin: 2px 0 0; color: var(--ink-3); }
 
 .px-diff-body .px-diff-gap { color: var(--ink-4); }
+}

@@ -1,15 +1,32 @@
-import { ButtonLink } from '@/components/ui'
+import { CriticsBand } from '@/components/landing/critics-band'
+import { DemoRun } from '@/components/landing/demo-run'
+import { HeroCopy } from '@/components/landing/hero-copy'
+import { PrismHero } from '@/components/landing/prism-hero'
+import { FinalCta, Footer, Safety } from '@/components/landing/sections'
+import { StartShortcut } from '@/components/landing/shortcut'
+import { Steps } from '@/components/landing/steps'
+import { FloatingStart, TopBar } from '@/components/landing/top-bar'
 
-// Replaced by the landing page in #18.
-export default function Home() {
+import '@/components/landing/landing.css'
+
+export default function Landing() {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[1200px] flex-col justify-center gap-6 px-4">
-      <h1 className="text-title-1 font-semibold">One request in. One reviewed pull request out.</h1>
-      <div>
-        <ButtonLink href="/sign-in" variant="primary">
-          Start a run
-        </ButtonLink>
-      </div>
-    </main>
+    <div className="overflow-x-hidden">
+      <TopBar />
+      <main>
+        <section id="top" className="mx-auto flex max-w-[1240px] flex-col gap-2 pt-6 sm:gap-6 sm:px-6 sm:pt-14 lg:flex-row lg:items-center">
+          <HeroCopy />
+          <PrismHero />
+        </section>
+        <DemoRun />
+        <Steps />
+        <CriticsBand />
+        <Safety />
+        <FinalCta />
+      </main>
+      <Footer />
+      <FloatingStart />
+      <StartShortcut />
+    </div>
   )
 }

@@ -3,7 +3,8 @@
 
 /* PrismOS tokens (Darkroom). Dark is the default; light is designed separately on warm paper.
    Values come from the PrismOS design system; nothing outside this file sets a colour. */
-:root {
+:root,
+[data-theme='dark'] {
   color-scheme: dark;
   --ground: #141315;
   --surface-1: #1b1a1d;
