@@ -112,7 +112,7 @@ coverage and verifier agreement, against a single-prompt baseline) is not built 
 - **Infra:** Vercel (web), Render (API and worker, Docker), GitHub Actions (CI, a keep-warm ping and Lighthouse).
 
 The landing page scores 99 for performance and 100 for accessibility, best practices and SEO in mobile
-Lighthouse on production (median of three runs; the `lighthouse` workflow re-measures it on every web change).
+Lighthouse on production (median of three runs; the `lighthouse` workflow re-measures it on every pull request that touches the web app).
 
 ## Run locally
 
