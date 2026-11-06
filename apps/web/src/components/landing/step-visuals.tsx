@@ -120,7 +120,7 @@ export function BuildVisual() {
           </div>
         ))}
       </div>
-      <span className="lp-check absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--success)_16%,var(--surface-3))] px-2 py-1 text-[11px] font-medium text-success">
+      <span className="lp-check absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--success)_10%,var(--surface-1))] px-2 py-1 text-[11px] font-medium text-success">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
           <path d="M5 12.5l4.5 4.5L19 7.5" />
         </svg>

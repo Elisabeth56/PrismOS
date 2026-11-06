@@ -1,0 +1,55 @@
+# Lighthouse (mobile, Lighthouse's default throttling) against a deployed URL.
+# Runs on pull requests that touch the web app, measuring that PR's Vercel preview when one is ready
+# (falls back to production), and on demand for any URL.
+name: lighthouse
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Page to measure
+        default: https://prism-os-jade.vercel.app
+  pull_request:
+    paths: ['apps/web/**', '.github/workflows/lighthouse.yml']
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Measure three times and keep the median
+        env:
+          URL: ${{ inputs.url || 'https://prism-os-jade.vercel.app' }}
+        run: |
+          for i in 1 2 3; do
+            npx -y lighthouse@12.2.1 "$URL" --quiet --chrome-flags="--headless=new --no-sandbox" \
+              --only-categories=performance,accessibility,best-practices,seo \
+              --output=json --output-path=run-$i.json || true
+          done
+          node -e '
+            const fs = require("fs")
+            const runs = [1, 2, 3].map(i => JSON.parse(fs.readFileSync(`run-${i}.json`)))
+              .sort((a, b) => a.categories.performance.score - b.categories.performance.score)
+            const r = runs[1]
+            const pct = c => Math.round(r.categories[c].score * 100)
+            const rows = [
+              ["URL", r.finalDisplayedUrl],
+              ["Performance (median of 3)", pct("performance")],
+              ["Accessibility", pct("accessibility")],
+              ["Best practices", pct("best-practices")],
+              ["SEO", pct("seo")],
+              ["LCP", r.audits["largest-contentful-paint"].displayValue],
+              ["Total blocking time", r.audits["total-blocking-time"].displayValue],
+              ["CLS", r.audits["cumulative-layout-shift"].displayValue],
+              ["All performance scores", runs.map(x => Math.round(x.categories.performance.score * 100)).join(", ")],
+            ]
+            const table = "| | |\n|---|---|\n" + rows.map(([k, v]) => `| ${k} | ${v} |`).join("\n")
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, "## Lighthouse (mobile)\n\n" + table + "\n")
+            console.log(table)
+            const failing = Object.values(r.audits).filter(a => a.score !== null && a.score < 0.9 && a.details?.type !== "debugdata").map(a => `${a.id}: ${a.displayValue ?? a.score}`)
+            console.log("\nAudits under 0.9:\n" + failing.join("\n"))
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse
+          path: run-*.json
