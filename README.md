@@ -100,8 +100,19 @@ From the first live run (adding an HTML/CSS landing page to a Bun + Hono booking
 | Conflicts | 0 · 4 files changed · verified first time |
 | Result | [PR #10](https://github.com/Elisabeth56/ridgewood-booking-api/pull/10) |
 
-One run is not an evaluation. The planned harness (golden cases scored for file-selection recall@15, spec
-coverage and verifier agreement, against a single-prompt baseline) is not built yet; see limitations.
+The eval runs six feature requests against a 14-file FastAPI fixture, through the pipeline and through a
+single prompt that sees every file, and scores both with the same acceptance checks
+([results](apps/api/evals/RESULTS.md)):
+
+| | Pipeline | Single prompt |
+|---|---|---|
+| Acceptance checks passed | 17/18 | 17/18 |
+| File selection recall | 92% | sees every file |
+| Verified / conflicts raised | 6/6 · 3 | no verifier |
+| Tokens per case | 22,758 | 6,437 |
+
+On a repo this small the critics don't change the outcome: both arms hit the same ceiling, and the pipeline
+costs about 3.5 times the tokens for its spec, conflicts and verification.
 
 ## Tech stack
 
@@ -111,7 +122,7 @@ coverage and verifier agreement, against a single-prompt baseline) is not built 
 - **Models:** Gemini Flash for large calls, Groq for small ones, both on free tiers through the OpenAI-compatible API.
 - **Infra:** Vercel (web), Render (API and worker, Docker), GitHub Actions (CI, a keep-warm ping and Lighthouse).
 
-The landing page scores 99 for performance and 100 for accessibility, best practices and SEO in mobile
+The landing page scores 98 for performance and 100 for accessibility, best practices and SEO in mobile
 Lighthouse on production (median of three runs; the `lighthouse` workflow re-measures it on every pull request that touches the web app).
 
 ## Run locally
@@ -143,7 +154,8 @@ Without GitHub App credentials the API reads public repos only and can't open PR
 
 ## Limitations and next steps
 
-- **No eval harness yet**, so quality claims rest on tests and one live run. It's the next thing to build.
+- **The eval cases are too easy.** Both arms pass 17 of 18 checks, so it can't yet show whether the critics
+  improve the code. Harder cases (larger repos, security traps) are next.
 - **File selection is one model call over the tree.** Large monorepos need an index (pgvector, hybrid search).
 - **Free-tier limits.** Gemini's free tier may use inputs for training, and daily request limits cap volume
   at roughly 200 runs a day. Bring-your-own-key is the fix.

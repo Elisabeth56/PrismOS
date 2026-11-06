@@ -124,7 +124,7 @@ export function Footer() {
               <span className="text-[12px] leading-4 font-medium tracking-[0.02em] text-ink-3">Build notes</span>
               <a href={REPO} className="lp-link">Source on GitHub</a>
               <a href={`${REPO}/tree/main/docs/decisions`} className="lp-link">Architecture decisions</a>
-              <a href={`${REPO}/tree/main/evals`} className="lp-link">Eval results</a>
+              <a href={`${REPO}/blob/main/apps/api/evals/RESULTS.md`} className="lp-link">Eval results</a>
             </nav>
           </div>
         </div>
