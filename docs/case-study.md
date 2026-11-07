@@ -71,16 +71,21 @@ The first successful run added an HTML/CSS landing page to a small Bun + Hono AP
 time. The verifier passed it on the first build and the approval opened
 [PR #10](https://github.com/Elisabeth56/ridgewood-booking-api/pull/10).
 
-The API has 136 tests, including the conflict rules, exactly-once claims, resume after a crash, idempotent PR
+The API has 145 tests, including the conflict rules, exactly-once claims, resume after a crash, idempotent PR
 opening and the access checks; the web app has 25.
 
 ## What I'd do next
 
-The biggest gap is evaluation. One run is a demo, not evidence. The harness I planned scores a set of golden
-cases for file-selection recall, spec coverage and verifier agreement, against a single-prompt baseline. Until
-it exists I can't say the critics improve the output, only that they behave as designed. After that: an
-embedding index for large repos, a reviewer demo account, and bring-your-own-key so private code doesn't go
-through a free tier.
+I built the eval last, and it gave an honest answer I didn't want: on six requests against a 14-file API, the
+pipeline and a single prompt that sees the whole repo both pass 17 of 18 acceptance checks. The critics settle
+real conflicts and the verifier agreed with the checks every time, but on a repo that small they don't change
+the result, and the pipeline uses about 3.5 times the tokens. The cases are too easy to separate the two, so
+the next work is harder ones: larger repos and requests with a security trap. After that, an embedding index
+for large repos and bring-your-own-key so private code doesn't go through a free tier.
+
+Running it also caught a production bug. Google had closed the fallback model to new keys, so when the main
+model hit its per-minute limit there was nothing behind it. Calls now wait out the provider's rate-limit hint
+and skip a retired model without giving up on the provider.
 
 What I'd keep: designing the data and the failure modes before the agents. Most of the hackathon version's
 problems were about where state lived, not about prompts.

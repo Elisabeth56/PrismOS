@@ -20,4 +20,5 @@ types) and anything the filter dropped.
 - Files are read in the selector's order until the cap; whatever doesn't fit is listed as omitted, shown to
   the user and named in the prompt so the model knows what it didn't see.
 - Selection goes to Groq when the prompt fits about 6K tokens and to Gemini otherwise.
-- **Not measured yet.** Recall@15 needs the eval harness, which isn't built (see the README).
+- **Measured: 92% recall** of the files a change must touch, over the six eval cases
+  ([results](../../apps/api/evals/RESULTS.md)). The fixture is small, so this says little about large repos yet.

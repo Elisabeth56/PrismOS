@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import time
 from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass
@@ -38,6 +39,8 @@ BASE_URLS: dict[Provider, str] = {
 # errors worth retrying or falling back on; anything else (bad request, auth) fails straight away
 TRANSIENT = (openai.RateLimitError, openai.APITimeoutError, openai.APIConnectionError, openai.InternalServerError)
 RETRY_DELAY_SECONDS = 2.0
+# Gemini puts its hint in the error body ("retryDelay": "12s"); Groq sends a Retry-After header
+RETRY_DELAY_HINT = re.compile(r"retryDelay'?\"?:\s*'?\"?(\d+(?:\.\d+)?)s")
 
 
 @dataclass(frozen=True)
@@ -67,12 +70,26 @@ class LLMOutputInvalid(Exception):
 
 
 def model_chain(size: Size) -> list[Model]:
-    """Which models a call tries, in order. Small calls start on Groq. Large calls start on Gemini and use Groq
-    only as a last resort, because Groq's free tier caps tokens per minute."""
+    """Which models a call tries, in order. Small calls start on Groq, then the lighter Gemini model. Large calls
+    start on Gemini and use Groq only as a last resort, because Groq's free tier caps tokens per minute."""
     s = get_settings()
     gemini = [Model("gemini", s.GEMINI_MODEL), Model("gemini", s.GEMINI_FALLBACK_MODEL)]
     groq = Model("groq", s.GROQ_MODEL)
-    return [*gemini, groq] if size == "large" else [groq, *gemini[1:]]
+    return [*gemini, groq] if size == "large" else [groq, *reversed(gemini)]
+
+
+def _retry_delay(error: Exception) -> float:
+    """How long to wait before retrying: on a rate limit, the provider's own hint (capped), else a short pause."""
+    if not isinstance(error, openai.RateLimitError):
+        return RETRY_DELAY_SECONDS
+    header = error.response.headers.get("retry-after", "").strip()
+    if re.fullmatch(r"\d+(?:\.\d+)?", header):
+        seconds = float(header)
+    elif hint := RETRY_DELAY_HINT.search(str(error.body)):
+        seconds = float(hint.group(1))
+    else:
+        return RETRY_DELAY_SECONDS
+    return min(seconds, get_settings().LLM_MAX_RATE_LIMIT_WAIT_SECONDS)
 
 
 def _rejection(error: openai.APIStatusError) -> str:
@@ -109,8 +126,10 @@ async def _complete(
         except TRANSIENT as error:
             if attempt == 2:
                 raise
-            logger.warning("llm transient error, retrying: model=%s error=%s", model.name, type(error).__name__)
-            await asyncio.sleep(RETRY_DELAY_SECONDS)
+            delay = _retry_delay(error)
+            detail = _rejection(error) if isinstance(error, openai.APIStatusError) else type(error).__name__
+            logger.warning("llm transient error, retrying in %.0fs: model=%s %s", delay, model.name, detail)
+            await asyncio.sleep(delay)
             continue
         usage = Usage(
             model=model.name,
@@ -135,6 +154,9 @@ async def _with_fallback(size: Size, messages: Sequence[Message], temperature: f
             return await _complete(model, messages, temperature, json_mode)
         except TRANSIENT as error:
             reasons.append(f"{model.provider.title()} ({model.name}): {type(error).__name__}")
+        except openai.NotFoundError:
+            # a retired or misspelled model id: only this model is unusable, the provider's others may work
+            reasons.append(f"{model.provider.title()} has no model {model.name}")
         except openai.APIStatusError as error:
             # a refusal (bad key, region, quota policy) applies to the whole provider: skip its other models
             refused.add(model.provider)

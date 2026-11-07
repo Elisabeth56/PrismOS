@@ -38,6 +38,11 @@ jobs:
       - run: uv sync --frozen
       - name: Check the keys are there
         run: test -n "$GEMINI_API_KEY" && test -n "$GROQ_API_KEY" || (echo "Add GEMINI_API_KEY and GROQ_API_KEY as repository secrets" && exit 1)
+      - name: List the Gemini models this key can use
+        # model ids retire often; this shows the current ones when a run reports "has no model"
+        run: |
+          curl -sS -H "x-goog-api-key: $GEMINI_API_KEY" "https://generativelanguage.googleapis.com/v1beta/models?pageSize=200" \
+            | jq -r '.models[]? | select(.supportedGenerationMethods | index("generateContent")) | .name' || true
       - run: uv run pytest evals/test_eval.py -s -p no:logging
       - uses: actions/upload-artifact@v4
         if: always()

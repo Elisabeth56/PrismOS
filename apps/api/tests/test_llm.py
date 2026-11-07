@@ -75,7 +75,7 @@ async def test_rate_limit_retries_once_then_falls_back_to_the_next_model(provide
     result, _ = await llm.generate([{"role": "user", "content": "check"}], Verdict)
 
     assert result.verdict == "verified"
-    assert calls == ["gemini-3.5-flash", "gemini-3.5-flash", "gemini-2.5-flash-lite"]
+    assert calls == ["gemini-3.5-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"]
 
 
 async def test_small_calls_go_to_groq_first(provider):
@@ -140,3 +140,29 @@ async def test_when_every_provider_refuses_the_reasons_are_kept(provider):
         "Gemini refused the request: 400 User location is not supported",
         "Groq refused the request: 401 Invalid API Key",
     ]
+
+
+async def test_a_rate_limit_waits_as_long_as_the_provider_asks(provider, monkeypatch):
+    calls, responses = provider
+    waits: list[float] = []
+
+    async def sleep(seconds: float) -> None:
+        waits.append(seconds)
+
+    monkeypatch.setattr(llm.asyncio, "sleep", sleep)
+    gemini_hint = {"error": {"message": "quota", "details": [{"retryDelay": "12s"}]}}
+    responses.extend([httpx.Response(429, json=gemini_hint), ok(GOOD)])
+
+    await llm.generate([{"role": "user", "content": "check"}], Verdict)
+
+    assert waits == [12.0]
+    assert calls == ["gemini-3.5-flash", "gemini-3.5-flash"]
+
+
+async def test_a_retired_model_is_skipped_without_giving_up_on_its_provider(provider):
+    calls, responses = provider
+    responses.extend([RATE_LIMITED, RATE_LIMITED, httpx.Response(404, json={"error": {"message": ""}}), ok(GOOD)])
+
+    await llm.generate([{"role": "user", "content": "check"}], Verdict, size="small")
+
+    assert calls == ["openai/gpt-oss-120b", "openai/gpt-oss-120b", "gemini-3.5-flash-lite", "gemini-3.5-flash"]
