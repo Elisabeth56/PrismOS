@@ -6,7 +6,7 @@ import { PrismMark, Wordmark } from './logo'
 
 export function TopBar() {
   return (
-    <header className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5">
+    <header className="relative mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5">
       <Link href="/" aria-label="PrismOS home" className="text-ink no-underline">
         <Wordmark />
       </Link>

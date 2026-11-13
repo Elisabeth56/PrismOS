@@ -4,7 +4,7 @@ Describe a feature for your GitHub repo. Three critics review the plan, real dis
 you approve the change before PrismOS opens a pull request. For solo developers and small teams adding
 features to code that already exists.
 
-![The PrismOS landing page: a light aimed into a glass prism splits into three critic colours](docs/images/landing.png)
+![The PrismOS landing page: a light aimed into a glass prism splits into three critic colours](docs/images/landing.jpg)
 
 **Live:** [prism-os-jade.vercel.app](https://prism-os-jade.vercel.app) · **[Try the demo](https://prism-os-jade.vercel.app/demo)** (read-only, no sign-up) · **Decisions:** [docs/decisions](docs/decisions) · **Case study:** [docs/case-study.md](docs/case-study.md)
 
