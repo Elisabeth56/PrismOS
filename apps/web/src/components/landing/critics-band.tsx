@@ -46,7 +46,7 @@ export function CriticsBand() {
 
   return (
     // the band is always dark: oxblood is the brand block in both themes
-    <section ref={ref} id="critics" data-theme="dark" className="mt-24 scroll-mt-8 bg-oxblood text-ink sm:mt-32">
+    <section ref={ref} id="critics" data-theme="dark" className="lp-critics-bg mt-24 scroll-mt-8 text-ink sm:mt-32">
       <div className="mx-auto flex max-w-[1240px] flex-col gap-10 px-4 py-16 sm:gap-12 sm:px-6 sm:py-24">
         <div className="flex max-w-[680px] flex-col gap-4">
           <span className="font-mono text-[12px] leading-4 tracking-[0.02em] text-ink">The review panel</span>
