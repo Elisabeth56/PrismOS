@@ -13,6 +13,7 @@ import { useApi } from '@/lib/use-api'
 
 import { AccountProvider, Avatar, type Account } from './account'
 import { DemoBanner } from './demo-banner'
+import { WakingNotice } from './waking-notice'
 
 /** The app frame: projects on the left, one view on the right. ⌘K starts a new run from anywhere. */
 export function Shell({ account, children }: { account: Account; children: React.ReactNode }) {
@@ -108,6 +109,7 @@ export function Shell({ account, children }: { account: Account; children: React
         </aside>
         <main className="min-w-0 flex-1">
           {account.readOnly && <DemoBanner />}
+          <WakingNotice />
           {children}
         </main>
       </div>
