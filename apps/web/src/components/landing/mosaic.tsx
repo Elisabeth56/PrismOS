@@ -15,7 +15,7 @@ interface Tile {
 }
 
 /** One tile hops to a free neighbouring cell at a time: the run's colours moving through your repo. */
-export function nextTiles(tiles: Tile[], tick: number): Tile[] {
+function nextTiles(tiles: Tile[], tick: number): Tile[] {
   const next = tiles.map((t) => ({ ...t }))
   const i = tick % next.length
   const col = next[i].cell % COLS

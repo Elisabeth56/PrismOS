@@ -11,10 +11,11 @@ import '@/components/landing/landing.css'
 
 export default function Landing() {
   return (
-    <div className="overflow-x-hidden">
+    <div className="relative overflow-x-hidden">
+      <div aria-hidden className="lp-backdrop" />
       <TopBar />
       <main>
-        <section id="top" className="mx-auto flex max-w-[1240px] flex-col gap-2 pt-6 sm:gap-6 sm:px-6 sm:pt-14 lg:flex-row lg:items-center">
+        <section id="top" className="relative mx-auto flex max-w-[1240px] flex-col gap-2 pt-6 sm:gap-6 sm:px-6 sm:pt-14 lg:flex-row lg:items-center">
           <HeroCopy />
           <PrismHero />
         </section>
