@@ -99,6 +99,28 @@ export class ApiError extends Error {
   }
 }
 
+// Render's free tier sleeps after 15 idle minutes. While it boots, its proxy drops the connection or
+// answers 502-504, for up to about a minute.
+const WAKING_STATUSES = new Set([502, 503, 504])
+const WAKE_DEADLINE_MS = 75_000
+let waking = false
+const wakeListeners = new Set<(waking: boolean) => void>()
+
+function setWaking(next: boolean) {
+  if (waking === next) return
+  waking = next
+  wakeListeners.forEach((listener) => listener(next))
+}
+
+/** Tells the UI while a request is waiting for the API to wake up. Returns the unsubscribe. */
+export function onWaking(listener: (waking: boolean) => void) {
+  wakeListeners.add(listener)
+  listener(waking)
+  return () => {
+    wakeListeners.delete(listener)
+  }
+}
+
 async function session() {
   const { data } = await createClient().auth.getSession()
   return data.session
@@ -115,12 +137,20 @@ async function request<T>(path: string, init: RequestInit & { github?: boolean }
     headers.set('Authorization', `Bearer ${current.access_token}`)
   }
 
-  let response: Response
-  try {
-    response = await fetch(url, { ...init, headers, cache: 'no-store' })
-  } catch {
-    // the free API host sleeps when idle; the first request after that can take ~30s or fail outright
-    throw new ApiError(0, 'api_unreachable', "Can't reach the PrismOS server. It may be waking up; try again in a moment.")
+  // reads can wait out a cold start; a write that fails is reported, never repeated
+  const wait = (init.method ?? 'GET') === 'GET'
+  const started = Date.now()
+  let response: Response | undefined
+  for (let attempt = 0; ; attempt++) {
+    response = await fetch(url, { ...init, headers, cache: 'no-store' }).catch(() => undefined)
+    const asleep = !response || WAKING_STATUSES.has(response.status)
+    if (!asleep || !wait || Date.now() - started > WAKE_DEADLINE_MS) break
+    setWaking(true)
+    await new Promise((resolve) => setTimeout(resolve, Math.min(2000 * 2 ** attempt, 8000)))
+  }
+  setWaking(false)
+  if (!response || WAKING_STATUSES.has(response.status)) {
+    throw new ApiError(0, 'api_unreachable', "Can't reach the PrismOS server. It may still be starting; try again in a moment.")
   }
   if (response.status === 204) return undefined as T
   if (response.ok) return response.json() as Promise<T>
