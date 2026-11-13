@@ -102,9 +102,15 @@
   .lp-backdrop::after { opacity: 0.6; }
 }
 
-/* The review panel sits on light refracted through rippled glass, the same light as the hero, blended into
-   the oxblood (overlay), so the block stays a deep oxblood and only the bright threads of light show. */
+/* The review panel: a glass prism photographed on black (Trophim Laptev, Unsplash), with the oxblood washing in
+   from the left so the copy and cards keep their contrast and the prism keeps its own colours. */
 .lp-critics-bg {
-  background: url('/landing/refraction.webp') 50% 40% / cover no-repeat, var(--oxblood);
-  background-blend-mode: overlay;
+  background:
+    linear-gradient(90deg, rgb(122 58 55 / 0.97) 0%, rgb(122 58 55 / 0.88) 38%, rgb(122 58 55 / 0.25) 72%, rgb(122 58 55 / 0.1) 100%),
+    url('/landing/critics-prism.jpg') right center / cover no-repeat,
+    #090909;
+}
+/* on a phone the prism would sit behind the copy, so the block is plain oxblood there */
+@media (max-width: 767px) {
+  .lp-critics-bg { background: var(--oxblood); }
 }
